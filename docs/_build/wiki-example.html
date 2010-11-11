@@ -1,0 +1,773 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Wiki Example &mdash; WebOb v0.9.8 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.9.8',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="WebOb v0.9.8 documentation" href="index.html" />
+    <link rel="next" title="Comment Example" href="comment-example.html" />
+    <link rel="prev" title="WebOb File-Serving Example" href="file-example.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="comment-example.html" title="Comment Example"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="file-example.html" title="WebOb File-Serving Example"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="wiki-example">
+<h1><a class="toc-backref" href="#id1">Wiki Example</a><a class="headerlink" href="#wiki-example" title="Permalink to this headline">¶</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">author:</th><td class="field-body">Ian Bicking &lt;<a class="reference external" href="mailto:ianb&#37;&#52;&#48;colorstudy&#46;com">ianb<span>&#64;</span>colorstudy<span>&#46;</span>com</a>&gt;</td>
+</tr>
+</tbody>
+</table>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#wiki-example" id="id1">Wiki Example</a><ul>
+<li><a class="reference internal" href="#introduction" id="id2">Introduction</a></li>
+<li><a class="reference internal" href="#code" id="id3">Code</a></li>
+<li><a class="reference internal" href="#creating-an-application" id="id4">Creating an Application</a></li>
+<li><a class="reference internal" href="#the-wsgi-application" id="id5">The WSGI Application</a></li>
+<li><a class="reference internal" href="#the-domain-object" id="id6">The Domain Object</a></li>
+<li><a class="reference internal" href="#urls-path-info-and-script-name" id="id7">URLs, PATH_INFO, and SCRIPT_NAME</a></li>
+<li><a class="reference internal" href="#back-to-the-application" id="id8">Back to the Application</a></li>
+<li><a class="reference internal" href="#the-edit-screen" id="id9">The Edit Screen</a></li>
+<li><a class="reference internal" href="#processing-the-form" id="id10">Processing the Form</a></li>
+<li><a class="reference internal" href="#cookies" id="id11">Cookies</a></li>
+<li><a class="reference internal" href="#conclusion" id="id12">Conclusion</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="introduction">
+<h2><a class="toc-backref" href="#id2">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This is an example of how to write a WSGI application using WebOb.
+WebOb isn&#8217;t itself intended to write applications &#8211; it is not a web
+framework on its own &#8211; but it is <em>possible</em> to write applications
+using just WebOb.</p>
+<p>The <a class="reference external" href="file-example.html">file serving example</a> is a better example of
+advanced HTTP usage.  The <a class="reference external" href="comment-example.html">comment middleware example</a> is a better example of using middleware.
+This example provides some completeness by showing an
+application-focused end point.</p>
+<p>This example implements a very simple wiki.</p>
+</div>
+<div class="section" id="code">
+<h2><a class="toc-backref" href="#id3">Code</a><a class="headerlink" href="#code" title="Permalink to this headline">¶</a></h2>
+<p>The finished code for this is available in
+<a class="reference external" href="http://bitbucket.org/ianb/webob/src/tip/docs/wiki-example-code/example.py">docs/wiki-example-code/example.py</a>
+&#8211; you can run that file as a script to try it out.</p>
+</div>
+<div class="section" id="creating-an-application">
+<h2><a class="toc-backref" href="#id4">Creating an Application</a><a class="headerlink" href="#creating-an-application" title="Permalink to this headline">¶</a></h2>
+<p>A common pattern for creating small WSGI applications is to have a
+class which is instantiated with the configuration.  For our
+application we&#8217;ll be storing the pages under a directory.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">WikiApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">storage_dir</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">storage_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">storage_dir</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>WSGI applications are callables like <tt class="docutils literal"><span class="pre">wsgi_app(environ,</span>
+<span class="pre">start_response)</span></tt>.  <em>Instances</em> of <cite>WikiApp</cite> are WSGI applications, so
+we&#8217;ll implement a <tt class="docutils literal"><span class="pre">__call__</span></tt> method:</p>
+<div class="highlight-python"><pre>class WikiApp(object):
+    ...
+    def __call__(self, environ, start_response):
+        # what we'll fill in</pre>
+</div>
+<p>To make the script runnable we&#8217;ll create a simple command-line
+interface:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">optparse</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">optparse</span><span class="o">.</span><span class="n">OptionParser</span><span class="p">(</span>
+        <span class="n">usage</span><span class="o">=</span><span class="s">&#39;%prog --port=PORT&#39;</span>
+        <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&#39;-p&#39;</span><span class="p">,</span> <span class="s">&#39;--port&#39;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s">&#39;8080&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;port&#39;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="s">&#39;int&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&#39;Port to serve on (default 8080)&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&#39;--wiki-data&#39;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s">&#39;./wiki&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;wiki_data&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&#39;Place to put wiki data into (default ./wiki/)&#39;</span><span class="p">)</span>
+    <span class="n">options</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="k">print</span> <span class="s">&#39;Writing wiki pages to </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">options</span><span class="o">.</span><span class="n">wiki_data</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">WikiApp</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">wiki_data</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">wsgiref.simple_server</span> <span class="kn">import</span> <span class="n">make_server</span>
+    <span class="n">httpd</span> <span class="o">=</span> <span class="n">make_server</span><span class="p">(</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="n">app</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&#39;Serving on http://localhost:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">options</span><span class="o">.</span><span class="n">port</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">httpd</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&#39;^C&#39;</span>
+</pre></div>
+</div>
+<p>There&#8217;s not much to talk about in this code block.  The application is
+instantiated and served with the built-in module
+<a class="reference external" href="http://www.python.org/doc/current/lib/module-wsgiref.simple_server.html">wsgiref.simple_server</a>.</p>
+</div>
+<div class="section" id="the-wsgi-application">
+<h2><a class="toc-backref" href="#id5">The WSGI Application</a><a class="headerlink" href="#the-wsgi-application" title="Permalink to this headline">¶</a></h2>
+<p>Of course all the interesting stuff is in that <tt class="docutils literal"><span class="pre">__call__</span></tt> method.
+WebOb lets you ignore some of the details of WSGI, like what
+<tt class="docutils literal"><span class="pre">start_response</span></tt> really is.  <tt class="docutils literal"><span class="pre">environ</span></tt> is a CGI-like dictionary,
+but <tt class="docutils literal"><span class="pre">webob.Request</span></tt> gives an object interface to it.
+<tt class="docutils literal"><span class="pre">webob.Response</span></tt> represents a response, and is itself a WSGI
+application.  Here&#8217;s kind of the hello world of WSGI applications
+using these objects:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">Request</span><span class="p">,</span> <span class="n">Response</span>
+
+<span class="k">class</span> <span class="nc">WikiApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">Response</span><span class="p">(</span>
+            <span class="s">&#39;Hello </span><span class="si">%s</span><span class="s">!&#39;</span> <span class="o">%</span> <span class="n">req</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;World&#39;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">resp</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">req.params.get('name',</span> <span class="pre">'World')</span></tt> gets any query string parameter
+(like <tt class="docutils literal"><span class="pre">?name=Bob</span></tt>), or if it&#8217;s a POST form request it will look for
+a form parameter <tt class="docutils literal"><span class="pre">name</span></tt>.  We instantiate the response with the body
+of the response.  You could also give keyword arguments like
+<tt class="docutils literal"><span class="pre">content_type='text/plain'</span></tt> (<tt class="docutils literal"><span class="pre">text/html</span></tt> is the default content
+type and <tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt> is the default status).</p>
+<p>For the wiki application we&#8217;ll support a couple different kinds of
+screens, and we&#8217;ll make our <tt class="docutils literal"><span class="pre">__call__</span></tt> method dispatch to different
+methods depending on the request.  We&#8217;ll support an <tt class="docutils literal"><span class="pre">action</span></tt>
+parameter like <tt class="docutils literal"><span class="pre">?action=edit</span></tt>, and also dispatch on the method (GET,
+POST, etc, in <tt class="docutils literal"><span class="pre">req.method</span></tt>).  We&#8217;ll pass in the request and expect a
+response object back.</p>
+<p>Also, WebOb has a series of exceptions in <tt class="docutils literal"><span class="pre">webob.exc</span></tt>, like
+<tt class="docutils literal"><span class="pre">webob.exc.HTTPNotFound</span></tt>, <tt class="docutils literal"><span class="pre">webob.exc.HTTPTemporaryRedirect</span></tt>, etc.
+We&#8217;ll also let the method raise one of these exceptions and turn it
+into a response.</p>
+<p>One last thing we&#8217;ll do in our <tt class="docutils literal"><span class="pre">__call__</span></tt> method is create our
+<tt class="docutils literal"><span class="pre">Page</span></tt> object, which represents a wiki page.</p>
+<p>All this together makes:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">Request</span><span class="p">,</span> <span class="n">Response</span>
+<span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">exc</span>
+
+<span class="k">class</span> <span class="nc">WikiApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;action&#39;</span><span class="p">,</span> <span class="s">&#39;view&#39;</span><span class="p">)</span>
+        <span class="c"># Here&#39;s where we get the Page domain object:</span>
+        <span class="n">page</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_page</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">path_info</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c"># The method name is action_{action_param}_{request_method}:</span>
+                <span class="n">meth</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;action_</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">req</span><span class="o">.</span><span class="n">method</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="c"># If the method wasn&#39;t found there must be</span>
+                <span class="c"># something wrong with the request:</span>
+                <span class="k">raise</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPBadRequest</span><span class="p">(</span><span class="s">&#39;No such action </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">action</span><span class="p">)</span><span class="o">.</span><span class="n">exception</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">meth</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">page</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPException</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c"># The exception object itself is a WSGI application/response:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">e</span>
+        <span class="k">return</span> <span class="n">resp</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-domain-object">
+<h2><a class="toc-backref" href="#id6">The Domain Object</a><a class="headerlink" href="#the-domain-object" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">Page</span></tt> domain object isn&#8217;t really related to the web, but it is
+important to implementing this.  Each <tt class="docutils literal"><span class="pre">Page</span></tt> is just a file on the
+filesystem.  Our <tt class="docutils literal"><span class="pre">get_page</span></tt> method figures out the filename given
+the path (the path is in <tt class="docutils literal"><span class="pre">req.path_info</span></tt>, which is all the path
+after the base path).  The <tt class="docutils literal"><span class="pre">Page</span></tt> class handles getting and setting
+the title and content.</p>
+<p>Here&#8217;s the method to figure out the filename:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="k">class</span> <span class="nc">WikiApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">get_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
+            <span class="c"># The path was &#39;/&#39;, the home page</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;index&#39;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_dir</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">+=</span> <span class="s">&#39;index&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_dir</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPBadRequest</span><span class="p">(</span><span class="s">&quot;Bad path&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exception</span>
+        <span class="n">path</span> <span class="o">+=</span> <span class="s">&#39;.html&#39;</span>
+        <span class="k">return</span> <span class="n">Page</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Mostly this is just the kind of careful path construction you have to
+do when mapping a URL to a filename.  While the server <em>may</em> normalize
+the path (so that a path like <tt class="docutils literal"><span class="pre">/../../</span></tt> can&#8217;t be requested), you can
+never really be sure.  By using <tt class="docutils literal"><span class="pre">os.path.normpath</span></tt> we eliminate
+these, and then we make absolutely sure that the resulting path is
+under our <tt class="docutils literal"><span class="pre">self.storage_dir</span></tt> with <tt class="docutils literal"><span class="pre">if</span> <span class="pre">not</span>
+<span class="pre">path.startswith(self.storage_dir):</span> <span class="pre">raise</span> <span class="pre">exc.HTTPBadRequest(&quot;Bad</span>
+<span class="pre">path&quot;).exception</span></tt>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><tt class="docutils literal"><span class="pre">exc.HTTPBadRequest(&quot;Bad</span> <span class="pre">path&quot;)</span></tt> is a <tt class="docutils literal"><span class="pre">webob.Response</span></tt> object.
+This is a new-style class, so you can&#8217;t raise it in Python 2.4 or
+under (only old-style classes work).  The attribute <tt class="docutils literal"><span class="pre">.exception</span></tt>
+can actually be raised.  The exception object is <em>also</em> a WSGI
+application, though it doesn&#8217;t have attributes like
+<tt class="docutils literal"><span class="pre">.content_type</span></tt>, etc.</p>
+</div>
+<p>Here&#8217;s the actual domain object:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Page</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">title</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+            <span class="c"># we need to guess the title</span>
+            <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">))[</span><span class="mf">0</span><span class="p">]</span>
+            <span class="n">basename</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">r&#39;[_-]&#39;</span><span class="p">,</span> <span class="s">&#39; &#39;</span><span class="p">,</span> <span class="n">basename</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">basename</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_content</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">r&#39;&lt;title&gt;(.*?)&lt;/title&gt;&#39;</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="o">|</span><span class="n">re</span><span class="o">.</span><span class="n">S</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mf">1</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">full_content</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">content</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;&#39;</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_content</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">r&#39;&lt;body[^&gt;]*&gt;(.*?)&lt;/body&gt;&#39;</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="o">|</span><span class="n">re</span><span class="o">.</span><span class="n">S</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mf">1</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mtime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">st_mtime</span>
+
+    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+        <span class="nb">dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="nb">dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span>
+        <span class="n">new_content</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;</span><span class="si">%s</span><span class="s">&lt;/title&gt;&lt;/head&gt;&lt;body&gt;</span><span class="si">%s</span><span class="s">&lt;/body&gt;&lt;/html&gt;&quot;&quot;&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">title</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">new_content</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Basically it provides a <tt class="docutils literal"><span class="pre">.title</span></tt> attribute, a <tt class="docutils literal"><span class="pre">.content</span></tt>
+attribute, the <tt class="docutils literal"><span class="pre">.mtime</span></tt> (last modified time), and the page can exist
+or not (giving appropriate guesses for title and content when the page
+does not exist).  It encodes these on the filesystem as a simple HTML
+page that is parsed by some regular expressions.</p>
+<p>None of this really applies much to the web or WebOb, so I&#8217;ll leave it
+to you to figure out the details of this.</p>
+</div>
+<div class="section" id="urls-path-info-and-script-name">
+<h2><a class="toc-backref" href="#id7">URLs, PATH_INFO, and SCRIPT_NAME</a><a class="headerlink" href="#urls-path-info-and-script-name" title="Permalink to this headline">¶</a></h2>
+<p>This is an aside for the tutorial, but an important concept.  In WSGI,
+and accordingly with WebOb, the URL is split up into several pieces.
+Some of these are obvious and some not.</p>
+<p>An example:</p>
+<div class="highlight-python"><pre>http://example.com:8080/wiki/article/12?version=10</pre>
+</div>
+<p>There are several components here:</p>
+<ul class="simple">
+<li>req.scheme: <tt class="docutils literal"><span class="pre">http</span></tt></li>
+<li>req.host: <tt class="docutils literal"><span class="pre">example.com:8080</span></tt></li>
+<li>req.server_name: <tt class="docutils literal"><span class="pre">example.com</span></tt></li>
+<li>req.server_port: 8080</li>
+<li>req.script_name: <tt class="docutils literal"><span class="pre">/wiki</span></tt></li>
+<li>req.path_info: <tt class="docutils literal"><span class="pre">/article/12</span></tt></li>
+<li>req.query_string: <tt class="docutils literal"><span class="pre">version=10</span></tt></li>
+</ul>
+<p>One non-obvious part is <tt class="docutils literal"><span class="pre">req.script_name</span></tt> and <tt class="docutils literal"><span class="pre">req.path_info</span></tt>.
+These correspond to the CGI environmental variables <tt class="docutils literal"><span class="pre">SCRIPT_NAME</span></tt>
+and <tt class="docutils literal"><span class="pre">PATH_INFO</span></tt>.  <tt class="docutils literal"><span class="pre">req.script_name</span></tt> points to the <em>application</em>.
+You might have several applications in your site at different paths:
+one at <tt class="docutils literal"><span class="pre">/wiki</span></tt>, one at <tt class="docutils literal"><span class="pre">/blog</span></tt>, one at <tt class="docutils literal"><span class="pre">/</span></tt>.  Each application
+doesn&#8217;t necessarily know about the others, but it has to construct its
+URLs properly &#8211; so any internal links to the wiki application should
+start with <tt class="docutils literal"><span class="pre">/wiki</span></tt>.</p>
+<p>Just as there are pieces to the URL, there are several properties in
+WebOb to construct URLs based on these:</p>
+<ul class="simple">
+<li>req.host_url: <tt class="docutils literal"><span class="pre">http://example.com:8080</span></tt></li>
+<li>req.application_url: <tt class="docutils literal"><span class="pre">http://example.com:8080/wiki</span></tt></li>
+<li>req.path_url: <tt class="docutils literal"><span class="pre">http://example.com:8080/wiki/article/12</span></tt></li>
+<li>req.path: <tt class="docutils literal"><span class="pre">/wiki/article/12</span></tt></li>
+<li>req.path_qs: <tt class="docutils literal"><span class="pre">/wiki/article/12?version=10</span></tt></li>
+<li>req.url: <tt class="docutils literal"><span class="pre">http://example.com:8080/wiki/article/12?version10</span></tt></li>
+</ul>
+<p>You can also create URLs with
+<tt class="docutils literal"><span class="pre">req.relative_url('some/other/page')</span></tt>.  In this example that would
+resolve to <tt class="docutils literal"><span class="pre">http://example.com:8080/wiki/article/some/other/page</span></tt>.
+You can also create a relative URL to the application URL
+(SCRIPT_NAME) like <tt class="docutils literal"><span class="pre">req.relative_url('some/other/page',</span> <span class="pre">True)</span></tt> which
+would be <tt class="docutils literal"><span class="pre">http://example.com:8080/wiki/some/other/page</span></tt>.</p>
+</div>
+<div class="section" id="back-to-the-application">
+<h2><a class="toc-backref" href="#id8">Back to the Application</a><a class="headerlink" href="#back-to-the-application" title="Permalink to this headline">¶</a></h2>
+<p>We have a dispatching function with <tt class="docutils literal"><span class="pre">__call__</span></tt> and we have a domain
+object with <tt class="docutils literal"><span class="pre">Page</span></tt>, but we aren&#8217;t actually doing anything.</p>
+<p>The dispatching goes to <tt class="docutils literal"><span class="pre">action_ACTION_METHOD</span></tt>, where ACTION
+defaults to <tt class="docutils literal"><span class="pre">view</span></tt>.  So a simple page view will be
+<tt class="docutils literal"><span class="pre">action_view_GET</span></tt>.  Let&#8217;s implement that:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">WikiApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">action_view_GET</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="n">page</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">page</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPTemporaryRedirect</span><span class="p">(</span>
+                <span class="n">location</span><span class="o">=</span><span class="n">req</span><span class="o">.</span><span class="n">url</span> <span class="o">+</span> <span class="s">&#39;?action=edit&#39;</span><span class="p">)</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">view_template</span><span class="o">.</span><span class="n">substitute</span><span class="p">(</span>
+            <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span> <span class="n">req</span><span class="o">=</span><span class="n">req</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">Response</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">resp</span><span class="o">.</span><span class="n">last_modified</span> <span class="o">=</span> <span class="n">page</span><span class="o">.</span><span class="n">mtime</span>
+        <span class="n">resp</span><span class="o">.</span><span class="n">conditional_response</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="n">resp</span>
+</pre></div>
+</div>
+<p>The first thing we do is redirect the user to the edit screen if the
+page doesn&#8217;t exist.  <tt class="docutils literal"><span class="pre">exc.HTTPTemporaryRedirect</span></tt> is a response that
+gives a <tt class="docutils literal"><span class="pre">307</span> <span class="pre">Temporary</span> <span class="pre">Redirect</span></tt> response with the given location.</p>
+<p>Otherwise we fill in a template.  The template language we&#8217;re going to
+use in this example is <a class="reference external" href="http://pythonpaste.org/tempita/">Tempita</a>, a
+very simple template language with a similar interface to
+<a class="reference external" href="http://python.org/doc/current/lib/node40.html">string.Template</a>.</p>
+<p>The template actually looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">tempita</span> <span class="kn">import</span> <span class="n">HTMLTemplate</span>
+
+<span class="n">VIEW_TEMPLATE</span> <span class="o">=</span> <span class="n">HTMLTemplate</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">&lt;html&gt;</span>
+<span class="s"> &lt;head&gt;</span>
+<span class="s">  &lt;title&gt;{{page.title}}&lt;/title&gt;</span>
+<span class="s"> &lt;/head&gt;</span>
+<span class="s"> &lt;body&gt;</span>
+<span class="s">&lt;h1&gt;{{page.title}}&lt;/h1&gt;</span>
+
+<span class="s">&lt;div&gt;{{page.content|html}}&lt;/div&gt;</span>
+
+<span class="s">&lt;hr&gt;</span>
+<span class="s">&lt;a href=&quot;{{req.url}}?action=edit&quot;&gt;Edit&lt;/a&gt;</span>
+<span class="s"> &lt;/body&gt;</span>
+<span class="s">&lt;/html&gt;</span>
+<span class="s">&quot;&quot;&quot;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">WikiApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">view_template</span> <span class="o">=</span> <span class="n">VIEW_TEMPLATE</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>As you can see it&#8217;s a simple template using the title and the body,
+and a link to the edit screen.  We copy the template object into a
+class method (<tt class="docutils literal"><span class="pre">view_template</span> <span class="pre">=</span> <span class="pre">VIEW_TEMPLATE</span></tt>) so that potentially a
+subclass could override these templates.</p>
+<p><tt class="docutils literal"><span class="pre">tempita.HTMLTemplate</span></tt> is a template that does automatic HTML
+escaping.  Our wiki will just be written in plain HTML, so we disable
+escaping of the content with <tt class="docutils literal"><span class="pre">{{page.content|html}}</span></tt>.</p>
+<p>So let&#8217;s look at the <tt class="docutils literal"><span class="pre">action_view_GET</span></tt> method again:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">action_view_GET</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="n">page</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">page</span><span class="o">.</span><span class="n">exists</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPTemporaryRedirect</span><span class="p">(</span>
+            <span class="n">location</span><span class="o">=</span><span class="n">req</span><span class="o">.</span><span class="n">url</span> <span class="o">+</span> <span class="s">&#39;?action=edit&#39;</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">view_template</span><span class="o">.</span><span class="n">substitute</span><span class="p">(</span>
+        <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span> <span class="n">req</span><span class="o">=</span><span class="n">req</span><span class="p">)</span>
+    <span class="n">resp</span> <span class="o">=</span> <span class="n">Response</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">resp</span><span class="o">.</span><span class="n">last_modified</span> <span class="o">=</span> <span class="n">page</span><span class="o">.</span><span class="n">mtime</span>
+    <span class="n">resp</span><span class="o">.</span><span class="n">conditional_response</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="n">resp</span>
+</pre></div>
+</div>
+<p>The template should be pretty obvious now.  We create a response with
+<tt class="docutils literal"><span class="pre">Response(text)</span></tt>, which already has a default Content-Type of
+<tt class="docutils literal"><span class="pre">text/html</span></tt>.</p>
+<p>To allow conditional responses we set <tt class="docutils literal"><span class="pre">resp.last_modified</span></tt>.  You can
+set this attribute to a date, None (effectively removing the header),
+a time tuple (like produced by <tt class="docutils literal"><span class="pre">time.localtime()</span></tt>), or as in this
+case to an integer timestamp.  If you get the value back it will
+always be a <a class="reference external" href="http://python.org/doc/current/lib/datetime-datetime.html">datetime</a> object
+(or None).  With this header we can process requests with
+If-Modified-Since headers, and return <tt class="docutils literal"><span class="pre">304</span> <span class="pre">Not</span> <span class="pre">Modified</span></tt> if
+appropriate.  It won&#8217;t actually do that unless you set
+<tt class="docutils literal"><span class="pre">resp.conditional_response</span></tt> to True.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you subclass <tt class="docutils literal"><span class="pre">webob.Response</span></tt> you can set the class attribute
+<tt class="docutils literal"><span class="pre">default_conditional_response</span> <span class="pre">=</span> <span class="pre">True</span></tt> and this setting will be
+on by default.  You can also set other defaults, like the
+<tt class="docutils literal"><span class="pre">default_charset</span></tt> (<tt class="docutils literal"><span class="pre">&quot;utf8&quot;</span></tt>), or <tt class="docutils literal"><span class="pre">default_content_type</span></tt>
+(<tt class="docutils literal"><span class="pre">&quot;text/html&quot;</span></tt>).</p>
+</div>
+</div>
+<div class="section" id="the-edit-screen">
+<h2><a class="toc-backref" href="#id9">The Edit Screen</a><a class="headerlink" href="#the-edit-screen" title="Permalink to this headline">¶</a></h2>
+<p>The edit screen will be implemented in the method
+<tt class="docutils literal"><span class="pre">action_edit_GET</span></tt>.  There&#8217;s a template and a very simple method:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">EDIT_TEMPLATE</span> <span class="o">=</span> <span class="n">HTMLTemplate</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">&lt;html&gt;</span>
+<span class="s"> &lt;head&gt;</span>
+<span class="s">  &lt;title&gt;Edit: {{page.title}}&lt;/title&gt;</span>
+<span class="s"> &lt;/head&gt;</span>
+<span class="s"> &lt;body&gt;</span>
+<span class="s">{{if page.exists}}</span>
+<span class="s">&lt;h1&gt;Edit: {{page.title}}&lt;/h1&gt;</span>
+<span class="s">{{else}}</span>
+<span class="s">&lt;h1&gt;Create: {{page.title}}&lt;/h1&gt;</span>
+<span class="s">{{endif}}</span>
+
+<span class="s">&lt;form action=&quot;{{req.path_url}}&quot; method=&quot;POST&quot;&gt;</span>
+<span class="s"> &lt;input type=&quot;hidden&quot; name=&quot;mtime&quot; value=&quot;{{page.mtime}}&quot;&gt;</span>
+<span class="s"> Title: &lt;input type=&quot;text&quot; name=&quot;title&quot; style=&quot;width: 70%&quot; value=&quot;{{page.title}}&quot;&gt;&lt;br&gt;</span>
+<span class="s"> Content: &lt;input type=&quot;submit&quot; value=&quot;Save&quot;&gt;</span>
+<span class="s"> &lt;a href=&quot;{{req.path_url}}&quot;&gt;Cancel&lt;/a&gt;</span>
+<span class="s">   &lt;br&gt;</span>
+<span class="s"> &lt;textarea name=&quot;content&quot; style=&quot;width: 100%; height: 75%&quot; rows=&quot;40&quot;&gt;{{page.content}}&lt;/textarea&gt;</span>
+<span class="s">   &lt;br&gt;</span>
+<span class="s"> &lt;input type=&quot;submit&quot; value=&quot;Save&quot;&gt;</span>
+<span class="s"> &lt;a href=&quot;{{req.path_url}}&quot;&gt;Cancel&lt;/a&gt;</span>
+<span class="s">&lt;/form&gt;</span>
+<span class="s">&lt;/body&gt;&lt;/html&gt;</span>
+<span class="s">&quot;&quot;&quot;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">WikiApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="n">edit_template</span> <span class="o">=</span> <span class="n">EDIT_TEMPLATE</span>
+
+    <span class="k">def</span> <span class="nf">action_edit_GET</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="n">page</span><span class="p">):</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">edit_template</span><span class="o">.</span><span class="n">substitute</span><span class="p">(</span>
+            <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span> <span class="n">req</span><span class="o">=</span><span class="n">req</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As you can see, all the action here is in the template.</p>
+<p>In <tt class="docutils literal"><span class="pre">&lt;form</span> <span class="pre">action=&quot;{{req.path_url}}&quot;</span> <span class="pre">method=&quot;POST&quot;&gt;</span></tt> we submit to
+<tt class="docutils literal"><span class="pre">req.path_url</span></tt>; that&#8217;s everything <em>but</em> <tt class="docutils literal"><span class="pre">?action=edit</span></tt>.  So we are
+POSTing right over the view page.  This has the nice side effect of
+automatically invalidating any caches of the original page.  It also
+is vaguely <a class="reference external" href="http://en.wikipedia.org/wiki/Representational_State_Transfer">RESTful</a>.</p>
+<p>We save the last modified time in a hidden <tt class="docutils literal"><span class="pre">mtime</span></tt> field.  This way
+we can detect concurrent updates.  If start editing the page who&#8217;s
+mtime is 100000, and someone else edits and saves a revision changing
+the mtime to 100010, we can use this hidden field to detect that
+conflict.  Actually resolving the conflict is a little tricky and
+outside the scope of this particular tutorial, we&#8217;ll just note the
+conflict to the user in an error.</p>
+<p>From there we just have a very straight-forward HTML form.  Note that
+we don&#8217;t quote the values because that is done automatically by
+<tt class="docutils literal"><span class="pre">HTMLTemplate</span></tt>; if you are using something like <tt class="docutils literal"><span class="pre">string.Template</span></tt>
+or a templating language that doesn&#8217;t do automatic quoting, you have
+to be careful to quote all the field values.</p>
+<p>We don&#8217;t have any error conditions in our application, but if there
+were error conditions we might have to re-display this form with the
+input values the user already gave.  In that case we&#8217;d do something
+like:</p>
+<div class="highlight-python"><pre>&lt;input type="text" name="title"
+ value="{{req.params.get('title', page.title)}}"&gt;</pre>
+</div>
+<p>This way we use the value in the request (<tt class="docutils literal"><span class="pre">req.params</span></tt> is both the
+query string parameters and any variables in a POST response), but if
+there is no value (e.g., first request) then we use the page values.</p>
+</div>
+<div class="section" id="processing-the-form">
+<h2><a class="toc-backref" href="#id10">Processing the Form</a><a class="headerlink" href="#processing-the-form" title="Permalink to this headline">¶</a></h2>
+<p>The form submits to <tt class="docutils literal"><span class="pre">action_view_POST</span></tt> (<tt class="docutils literal"><span class="pre">view</span></tt> is the default
+action).  So we have to implement that method:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">WikiApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">action_view_POST</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="n">page</span><span class="p">):</span>
+        <span class="n">submit_mtime</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;mtime&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&#39;0&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">page</span><span class="o">.</span><span class="n">mtime</span> <span class="o">!=</span> <span class="n">submit_mtime</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPPreconditionFailed</span><span class="p">(</span>
+                <span class="s">&quot;The page has been updated since you started editing it&quot;</span><span class="p">)</span>
+        <span class="n">page</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">req</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">],</span>
+            <span class="n">content</span><span class="o">=</span><span class="n">req</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;content&#39;</span><span class="p">])</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPSeeOther</span><span class="p">(</span>
+            <span class="n">location</span><span class="o">=</span><span class="n">req</span><span class="o">.</span><span class="n">path_url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resp</span>
+</pre></div>
+</div>
+<p>The first thing we do is check the mtime value.  It can be an empty
+string (when there&#8217;s no mtime, like when you are creating a page) or
+an integer.  <tt class="docutils literal"><span class="pre">int(req.params.get('time')</span> <span class="pre">or</span> <span class="pre">'0')</span> <span class="pre">or</span> <span class="pre">None</span></tt> basically
+makes sure we don&#8217;t pass <tt class="docutils literal"><span class="pre">&quot;&quot;</span></tt> to <tt class="docutils literal"><span class="pre">int()</span></tt> (which is an error) then
+turns 0 into None (<tt class="docutils literal"><span class="pre">0</span> <span class="pre">or</span> <span class="pre">None</span></tt> will evaluate to None in Python &#8211;
+<tt class="docutils literal"><span class="pre">false_value</span> <span class="pre">or</span> <span class="pre">other_value</span></tt> in Python resolves to <tt class="docutils literal"><span class="pre">other_value</span></tt>).
+If it fails we just give a not-very-helpful error message, using <tt class="docutils literal"><span class="pre">412</span>
+<span class="pre">Precondition</span> <span class="pre">Failed</span></tt> (typically preconditions are HTTP headers like
+<tt class="docutils literal"><span class="pre">If-Unmodified-Since</span></tt>, but we can&#8217;t really get the browser to send
+requests like that, so we use the hidden field instead).</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Error statuses in HTTP are often under-used because people think
+they need to either return an error (useful for machines) or an
+error message or interface (useful for humans).  In fact you can
+do both: you can give any human readable error message with your
+error response.</p>
+<p>One problem is that Internet Explorer will replace error messages
+with its own incredibly unhelpful error messages.  However, it
+will only do this if the error message is short.  If it&#8217;s fairly
+large (4Kb is large enough) it will show the error message it was
+given.  You can load your error with a big HTML comment to
+accomplish this, like <tt class="docutils literal"><span class="pre">&quot;&lt;!--</span> <span class="pre">%s</span> <span class="pre">--&gt;&quot;</span> <span class="pre">%</span> <span class="pre">('x'*4000)</span></tt>.</p>
+<p class="last">You can change the status of any response with <tt class="docutils literal"><span class="pre">resp.status_int</span> <span class="pre">=</span>
+<span class="pre">412</span></tt>, or you can change the body of an <tt class="docutils literal"><span class="pre">exc.HTTPSomething</span></tt> with
+<tt class="docutils literal"><span class="pre">resp.body</span> <span class="pre">=</span> <span class="pre">new_body</span></tt>.  The primary advantage of using the
+classes in <tt class="docutils literal"><span class="pre">webob.exc</span></tt> is giving the response a clear name and a
+boilerplate error message.</p>
+</div>
+<p>After we check the mtime we get the form parameters from
+<tt class="docutils literal"><span class="pre">req.params</span></tt> and issue a redirect back to the original view page.
+<tt class="docutils literal"><span class="pre">303</span> <span class="pre">See</span> <span class="pre">Other</span></tt> is a good response to give after accepting a POST
+form submission, as it gets rid of the POST (no warning messages for the
+user if they try to go back).</p>
+<p>In this example we&#8217;ve used <tt class="docutils literal"><span class="pre">req.params</span></tt> for all the form values.  If
+we wanted to be specific about where we get the values from, they
+could come from <tt class="docutils literal"><span class="pre">req.GET</span></tt> (the query string, a misnomer since the
+query string is present even in POST requests) or <tt class="docutils literal"><span class="pre">req.POST</span></tt> (a POST
+form body).  While sometimes it&#8217;s nice to distinguish between these
+two locations, for the most part it doesn&#8217;t matter.  If you want to
+check the request method (e.g., make sure you can&#8217;t change a page with
+a GET request) there&#8217;s no reason to do it by accessing these
+method-specific getters.  It&#8217;s better to just handle the method
+specifically.  We do it here by including the request method in our
+dispatcher (dispatching to <tt class="docutils literal"><span class="pre">action_view_GET</span></tt> or
+<tt class="docutils literal"><span class="pre">action_view_POST</span></tt>).</p>
+</div>
+<div class="section" id="cookies">
+<h2><a class="toc-backref" href="#id11">Cookies</a><a class="headerlink" href="#cookies" title="Permalink to this headline">¶</a></h2>
+<p>One last little improvement we can do is show the user a message when
+they update the page, so it&#8217;s not quite so mysteriously just another
+page view.</p>
+<p>A simple way to do this is to set a cookie after the save, then
+display it in the page view.  To set it on save, we add a little to
+<tt class="docutils literal"><span class="pre">action_view_POST</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">action_view_POST</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="n">page</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="n">resp</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPSeeOther</span><span class="p">(</span>
+        <span class="n">location</span><span class="o">=</span><span class="n">req</span><span class="o">.</span><span class="n">path_url</span><span class="p">)</span>
+    <span class="n">resp</span><span class="o">.</span><span class="n">set_cookie</span><span class="p">(</span><span class="s">&#39;message&#39;</span><span class="p">,</span> <span class="s">&#39;Page updated&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resp</span>
+</pre></div>
+</div>
+<p>And then in <tt class="docutils literal"><span class="pre">action_view_GET</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">VIEW_TEMPLATE</span> <span class="o">=</span> <span class="n">HTMLTemplate</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">...</span>
+<span class="s">{{if message}}</span>
+<span class="s">&lt;div style=&quot;background-color: #99f&quot;&gt;{{message}}&lt;/div&gt;</span>
+<span class="s">{{endif}}</span>
+<span class="s">...&quot;&quot;&quot;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">WikiApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">action_view_GET</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="n">page</span><span class="p">):</span>
+        <span class="o">...</span>
+        <span class="k">if</span> <span class="n">req</span><span class="o">.</span><span class="n">cookies</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;message&#39;</span><span class="p">):</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">cookies</span><span class="p">[</span><span class="s">&#39;message&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">view_template</span><span class="o">.</span><span class="n">substitute</span><span class="p">(</span>
+            <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span> <span class="n">req</span><span class="o">=</span><span class="n">req</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="n">message</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">Response</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">message</span><span class="p">:</span>
+            <span class="n">resp</span><span class="o">.</span><span class="n">delete_cookie</span><span class="p">(</span><span class="s">&#39;message&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">resp</span><span class="o">.</span><span class="n">last_modified</span> <span class="o">=</span> <span class="n">page</span><span class="o">.</span><span class="n">mtime</span>
+            <span class="n">resp</span><span class="o">.</span><span class="n">conditional_response</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="n">resp</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">req.cookies</span></tt> is just a dictionary, and we also delete the cookie if
+it is present (so the message doesn&#8217;t keep getting set).  The
+conditional response stuff only applies when there isn&#8217;t any
+message, as messages are private.  Another alternative would be to
+display the message with Javascript, like:</p>
+<div class="highlight-python"><pre>&lt;script type="text/javascript"&gt;
+function readCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for (var i=0; i &lt; ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+}
+
+function createCookie(name, value, days) {
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime()+(days*24*60*60*1000));
+        var expires = "; expires="+date.toGMTString();
+    } else {
+        var expires = "";
+    }
+    document.cookie = name+"="+value+expires+"; path=/";
+}
+
+function eraseCookie(name) {
+    createCookie(name, "", -1);
+}
+
+function showMessage() {
+    var message = readCookie('message');
+    if (message) {
+        var el = document.getElementById('message');
+        el.innerHTML = message;
+        el.style.display = '';
+        eraseCookie('message');
+    }
+}
+&lt;/script&gt;</pre>
+</div>
+<p>Then put <tt class="docutils literal"><span class="pre">&lt;div</span> <span class="pre">id=&quot;messaage&quot;</span> <span class="pre">style=&quot;display:</span> <span class="pre">none&quot;&gt;&lt;/div&gt;</span></tt> in the
+page somewhere.  This has the advantage of being very cacheable and
+simple on the server side.</p>
+</div>
+<div class="section" id="conclusion">
+<h2><a class="toc-backref" href="#id12">Conclusion</a><a class="headerlink" href="#conclusion" title="Permalink to this headline">¶</a></h2>
+<p>We&#8217;re done, hurrah!</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Wiki Example</a><ul>
+<li><a class="reference external" href="#introduction">Introduction</a></li>
+<li><a class="reference external" href="#code">Code</a></li>
+<li><a class="reference external" href="#creating-an-application">Creating an Application</a></li>
+<li><a class="reference external" href="#the-wsgi-application">The WSGI Application</a></li>
+<li><a class="reference external" href="#the-domain-object">The Domain Object</a></li>
+<li><a class="reference external" href="#urls-path-info-and-script-name">URLs, PATH_INFO, and SCRIPT_NAME</a></li>
+<li><a class="reference external" href="#back-to-the-application">Back to the Application</a></li>
+<li><a class="reference external" href="#the-edit-screen">The Edit Screen</a></li>
+<li><a class="reference external" href="#processing-the-form">Processing the Form</a></li>
+<li><a class="reference external" href="#cookies">Cookies</a></li>
+<li><a class="reference external" href="#conclusion">Conclusion</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="file-example.html"
+                                  title="previous chapter">WebOb File-Serving Example</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="comment-example.html"
+                                  title="next chapter">Comment Example</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/wiki-example.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="comment-example.html" title="Comment Example"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="file-example.html" title="WebOb File-Serving Example"
+             >previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2008, Ian Bicking.
+      Last updated on Feb 03, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

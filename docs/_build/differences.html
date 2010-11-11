@@ -1,0 +1,779 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Differences Between WebOb and Other Systems &mdash; WebOb v0.9.8 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.9.8',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="WebOb v0.9.8 documentation" href="index.html" />
+    <link rel="next" title="WebOb File-Serving Example" href="file-example.html" />
+    <link rel="prev" title="webob.dec – WSGIfy decorator" href="modules/dec.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="file-example.html" title="WebOb File-Serving Example"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="modules/dec.html" title="webob.dec – WSGIfy decorator"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="differences-between-webob-and-other-systems">
+<h1><a class="toc-backref" href="#id16">Differences Between WebOb and Other Systems</a><a class="headerlink" href="#differences-between-webob-and-other-systems" title="Permalink to this headline">¶</a></h1>
+<p>This document points out some of the API differences between the
+Request and Response object, and the objects in other systems.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#differences-between-webob-and-other-systems" id="id16">Differences Between WebOb and Other Systems</a><ul>
+<li><a class="reference internal" href="#paste-wsgiwrappers-and-pylons" id="id17">paste.wsgiwrappers and Pylons</a><ul>
+<li><a class="reference internal" href="#request" id="id18">Request</a></li>
+<li><a class="reference internal" href="#response" id="id19">Response</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#django" id="id20">Django</a><ul>
+<li><a class="reference internal" href="#id1" id="id21">Request</a></li>
+<li><a class="reference internal" href="#querydict" id="id22">QueryDict</a></li>
+<li><a class="reference internal" href="#id2" id="id23">Response</a></li>
+<li><a class="reference internal" href="#response-subclasses" id="id24">Response Subclasses</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#cherrypy-turbogears" id="id25">CherryPy/TurboGears</a><ul>
+<li><a class="reference internal" href="#id3" id="id26">Request</a></li>
+<li><a class="reference internal" href="#id4" id="id27">Response</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#yaro" id="id28">Yaro</a><ul>
+<li><a class="reference internal" href="#id6" id="id29">Request</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#werkzeug" id="id30">Werkzeug</a><ul>
+<li><a class="reference internal" href="#id7" id="id31">Request</a></li>
+<li><a class="reference internal" href="#id8" id="id32">Response</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#zope-3" id="id33">Zope 3</a><ul>
+<li><a class="reference internal" href="#id11" id="id34">Request</a></li>
+<li><a class="reference internal" href="#id12" id="id35">Response</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#mod-python" id="id36">mod_python</a><ul>
+<li><a class="reference internal" href="#id14" id="id37">Request</a></li>
+<li><a class="reference internal" href="#id15" id="id38">Response</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#webapp-response" id="id39">webapp Response</a></li>
+<li><a class="reference internal" href="#php" id="id40">PHP</a><ul>
+<li><a class="reference internal" href="#post-get-files" id="id41"><tt class="docutils literal"><span class="pre">$_POST</span></tt>, <tt class="docutils literal"><span class="pre">$_GET</span></tt>, <tt class="docutils literal"><span class="pre">$_FILES</span></tt></a></li>
+<li><a class="reference internal" href="#cookies" id="id42"><tt class="docutils literal"><span class="pre">$_COOKIES</span></tt></a></li>
+<li><a class="reference internal" href="#server-request-env" id="id43"><tt class="docutils literal"><span class="pre">$_SERVER</span></tt>, <tt class="docutils literal"><span class="pre">$_REQUEST</span></tt>, <tt class="docutils literal"><span class="pre">$_ENV</span></tt></a></li>
+<li><a class="reference internal" href="#http-raw-post-data" id="id44"><tt class="docutils literal"><span class="pre">$HTTP_RAW_POST_DATA</span></tt></a></li>
+<li><a class="reference internal" href="#the-response" id="id45">The response</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="paste-wsgiwrappers-and-pylons">
+<h2><a class="toc-backref" href="#id17">paste.wsgiwrappers and Pylons</a><a class="headerlink" href="#paste-wsgiwrappers-and-pylons" title="Permalink to this headline">¶</a></h2>
+<p>The Pylons <tt class="docutils literal"><span class="pre">request</span></tt> and <tt class="docutils literal"><span class="pre">response</span></tt> object are based on
+<tt class="docutils literal"><span class="pre">paste.wsgiwrappers.WSGIRequest</span></tt> and <tt class="docutils literal"><span class="pre">WSGIResponse</span></tt></p>
+<p>There is no concept of <tt class="docutils literal"><span class="pre">defaults</span></tt> in WebOb.  In Paste/Pylons these
+serve as threadlocal settings that control certain policies on the
+request and response object.  In WebOb you should make your own
+subclasses to control policy (though in many ways simply being
+explicit elsewhere removes the need for this policy).</p>
+<div class="section" id="request">
+<h3><a class="toc-backref" href="#id18">Request</a><a class="headerlink" href="#request" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">body</span></tt>:</dt>
+<dd>This is a file-like object in WSGIRequest.  In WebOb it is a
+string (to match Response.body) and the file-like object is
+available through <tt class="docutils literal"><span class="pre">req.body_file</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">languages()</span></tt>:</dt>
+<dd>This is available through <tt class="docutils literal"><span class="pre">req.accept_language</span></tt>, particularly
+<tt class="docutils literal"><span class="pre">req.accept_language.best_matches(fallback_language)</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">match_accept(mimetypes)</span></tt>:</dt>
+<dd>This is available through <tt class="docutils literal"><span class="pre">req.accept.first_match(mimetypes)</span></tt>;
+or if you trust the client&#8217;s quality ratings, you can use
+<tt class="docutils literal"><span class="pre">req.accept.best_match(mimetypes)</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">errors</span></tt>:</dt>
+<dd>This controls how unicode decode errors are handled; it is now
+named <tt class="docutils literal"><span class="pre">unicode_errors</span></tt></dd>
+</dl>
+<p>There are also many extra methods and attributes on WebOb Request
+objects.</p>
+</div>
+<div class="section" id="response">
+<h3><a class="toc-backref" href="#id19">Response</a><a class="headerlink" href="#response" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">determine_charset()</span></tt>:</dt>
+<dd>Is now available as <tt class="docutils literal"><span class="pre">res.charset</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">has_header(header)</span></tt>:</dt>
+<dd>Should be done with <tt class="docutils literal"><span class="pre">header</span> <span class="pre">in</span> <span class="pre">res.headers</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">get_content()</span></tt> and <tt class="docutils literal"><span class="pre">wsgi_response()</span></tt>:</dt>
+<dd>These are gone; you should use <tt class="docutils literal"><span class="pre">res.body</span></tt> or <tt class="docutils literal"><span class="pre">res(environ,</span>
+<span class="pre">start_response)</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">write(content)</span></tt>:</dt>
+<dd>Available in <tt class="docutils literal"><span class="pre">res.body_file.write(content)</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">flush()</span></tt> and <tt class="docutils literal"><span class="pre">tell()</span></tt>:</dt>
+<dd>Not available.</dd>
+</dl>
+<p>There are also many extra methods and attributes on WebOb Response
+objects.</p>
+</div>
+</div>
+<div class="section" id="django">
+<h2><a class="toc-backref" href="#id20">Django</a><a class="headerlink" href="#django" title="Permalink to this headline">¶</a></h2>
+<p>This is a quick summary from reading <a class="reference external" href="http://www.djangoproject.com/documentation/request_response/">the Django documentation</a>.</p>
+<div class="section" id="id1">
+<h3><a class="toc-backref" href="#id21">Request</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">encoding</span></tt>:</dt>
+<dd>Is <tt class="docutils literal"><span class="pre">req.charset</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">REQUEST</span></tt>:</dt>
+<dd>Is <tt class="docutils literal"><span class="pre">req.params</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">FILES</span></tt>:</dt>
+<dd>File uploads are <tt class="docutils literal"><span class="pre">cgi.FieldStorage</span></tt> objects directly in
+<tt class="docutils literal"><span class="pre">res.POST</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">META</span></tt>:</dt>
+<dd>Is <tt class="docutils literal"><span class="pre">req.environ</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">user</span></tt>:</dt>
+<dd>No equivalent (too connected to application model for WebOb).
+There is <tt class="docutils literal"><span class="pre">req.remote_user</span></tt>, which is only ever a string.</dd>
+<dt><tt class="docutils literal"><span class="pre">session</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">raw_post_data</span></tt>:</dt>
+<dd>Available with <tt class="docutils literal"><span class="pre">req.body</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">__getitem__(key)</span></tt>:</dt>
+<dd>You have to use <tt class="docutils literal"><span class="pre">req.params</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">is_secure()</span></tt>:</dt>
+<dd>No equivalent; you could use <tt class="docutils literal"><span class="pre">req.scheme</span> <span class="pre">==</span> <span class="pre">'https'</span></tt>.</dd>
+</dl>
+</div>
+<div class="section" id="querydict">
+<h3><a class="toc-backref" href="#id22">QueryDict</a><a class="headerlink" href="#querydict" title="Permalink to this headline">¶</a></h3>
+<p>QueryDict is the way Django represents the multi-key dictionary-like
+objects that are request variables (query string and POST body
+variables).  The equivalent in WebOb is MultiDict.</p>
+<dl class="docutils">
+<dt>Mutability:</dt>
+<dd>WebOb dictionaries are sometimes mutable (req.GET is,
+req.params is not)</dd>
+<dt>Ordering:</dt>
+<dd>I believe Django does not order the keys fully; MultiDict is a
+full ordering.  Methods that iterate over the parameters iterate
+over keys in their order in the original request.</dd>
+<dt><tt class="docutils literal"><span class="pre">keys()</span></tt>, <tt class="docutils literal"><span class="pre">items()</span></tt>, <tt class="docutils literal"><span class="pre">values()</span></tt> (plus <tt class="docutils literal"><span class="pre">iter*</span></tt>):</dt>
+<dd>These return all values in MultiDict, but only the last value for
+a QueryDict.  That is, given <tt class="docutils literal"><span class="pre">a=1&amp;a=2</span></tt> with MultiDict
+<tt class="docutils literal"><span class="pre">d.items()</span></tt> returns <tt class="docutils literal"><span class="pre">[('a',</span> <span class="pre">'1'),</span> <span class="pre">('a',</span> <span class="pre">'2')]</span></tt>, but QueryDict
+returns <tt class="docutils literal"><span class="pre">[('a',</span> <span class="pre">'1')]</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">getlist(key)</span></tt>:</dt>
+<dd>Available as <tt class="docutils literal"><span class="pre">d.getall(key)</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">setlist(key)</span></tt>:</dt>
+<dd>No direct equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">appendlist(key,</span> <span class="pre">value)</span></tt>:</dt>
+<dd>Available as <tt class="docutils literal"><span class="pre">d.add(key,</span> <span class="pre">value)</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">setlistdefault(key,</span> <span class="pre">default_list)</span></tt>:</dt>
+<dd>No direct equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">lists()</span></tt>:</dt>
+<dd>Is <tt class="docutils literal"><span class="pre">d.dict_of_lists()</span></tt></dd>
+</dl>
+<p>The MultiDict object has a <tt class="docutils literal"><span class="pre">d.getone(key)</span></tt> method, that raises
+KeyError if there is not exactly one key.  There is a method
+<tt class="docutils literal"><span class="pre">d.mixed()</span></tt> which returns a version where values are lists <em>if</em>
+there are multiple values for a list.  This is similar to how many
+cgi-based request forms are represented.</p>
+</div>
+<div class="section" id="id2">
+<h3><a class="toc-backref" href="#id23">Response</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>Constructor:</dt>
+<dd>Somewhat different.  WebOb takes any keyword arguments as
+attribute assignments.  Django only takes a couple arguments.  The
+<tt class="docutils literal"><span class="pre">mimetype</span></tt> argument is <tt class="docutils literal"><span class="pre">content_type</span></tt>, and <tt class="docutils literal"><span class="pre">content_type</span></tt> is
+the entire <tt class="docutils literal"><span class="pre">Content-Type</span></tt> header (including charset).</dd>
+<dt>dictionary-like:</dt>
+<dd>The Django response object is somewhat dictionary-like, setting
+headers.  The equivalent dictionary-like object is
+<tt class="docutils literal"><span class="pre">res.headers</span></tt>.  In WebOb this is a MultiDict.</dd>
+<dt><tt class="docutils literal"><span class="pre">has_header(header)</span></tt>:</dt>
+<dd>Use <tt class="docutils literal"><span class="pre">header</span> <span class="pre">in</span> <span class="pre">res.headers</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">flush()</span></tt>, <tt class="docutils literal"><span class="pre">tell()</span></tt>:</dt>
+<dd>Not available</dd>
+<dt><tt class="docutils literal"><span class="pre">content</span></tt>:</dt>
+<dd>Use <tt class="docutils literal"><span class="pre">res.body</span></tt> for the <tt class="docutils literal"><span class="pre">str</span></tt> value, <tt class="docutils literal"><span class="pre">res.unicode_body</span></tt> for
+the <tt class="docutils literal"><span class="pre">unicode</span></tt> value</dd>
+</dl>
+</div>
+<div class="section" id="response-subclasses">
+<h3><a class="toc-backref" href="#id24">Response Subclasses</a><a class="headerlink" href="#response-subclasses" title="Permalink to this headline">¶</a></h3>
+<p>These are generally like <tt class="docutils literal"><span class="pre">webob.exc</span></tt> objects.
+<tt class="docutils literal"><span class="pre">HttpResponseNotModified</span></tt> is <tt class="docutils literal"><span class="pre">HTTPNotModified</span></tt>; this naming
+translation generally works.</p>
+</div>
+</div>
+<div class="section" id="cherrypy-turbogears">
+<h2><a class="toc-backref" href="#id25">CherryPy/TurboGears</a><a class="headerlink" href="#cherrypy-turbogears" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference external" href="http://www.cherrypy.org/wiki/RequestObject">CherryPy request object</a> is also used by
+TurboGears 1.x.</p>
+<div class="section" id="id3">
+<h3><a class="toc-backref" href="#id26">Request</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">app</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">base</span></tt>:</dt>
+<dd><tt class="docutils literal"><span class="pre">req.application_url</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">close()</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">closed</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">config</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">cookie</span></tt>:</dt>
+<dd>A <tt class="docutils literal"><span class="pre">SimpleCookie</span></tt> object in CherryPy; a dictionary in WebOb
+(<tt class="docutils literal"><span class="pre">SimpleCookie</span></tt> can represent cookie parameters, but cookie
+parameters are only sent with responses not requests)</dd>
+<dt><tt class="docutils literal"><span class="pre">dispatch</span></tt>:</dt>
+<dd>No equivalent (this is the object dispatcher in CherryPy).</dd>
+<dt><tt class="docutils literal"><span class="pre">error_page</span></tt>, <tt class="docutils literal"><span class="pre">error_response</span></tt>, <tt class="docutils literal"><span class="pre">handle_error</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">get_resource()</span></tt>:</dt>
+<dd>Similar to <tt class="docutils literal"><span class="pre">req.get_response(app)</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">handler</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">headers</span></tt>, <tt class="docutils literal"><span class="pre">header_list</span></tt>:</dt>
+<dd>The WSGI environment represents headers as a dictionary, available
+through <tt class="docutils literal"><span class="pre">req.headers</span></tt> (no list form is available in the request).</dd>
+<dt><tt class="docutils literal"><span class="pre">hooks</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">local</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">methods_with_bodies</span></tt>:</dt>
+<dd>This represents methods where CherryPy will automatically try to
+read the request body.  WebOb lazily reads POST requests with the
+correct content type, and no other bodies.</dd>
+<dt><tt class="docutils literal"><span class="pre">namespaces</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">protocol</span></tt>:</dt>
+<dd>As <tt class="docutils literal"><span class="pre">req.environ['SERVER_PROTOCOL']</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">query_string</span></tt>:</dt>
+<dd>As <tt class="docutils literal"><span class="pre">req.query_string</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">remote</span></tt>:</dt>
+<dd><tt class="docutils literal"><span class="pre">remote.ip</span></tt> is like <tt class="docutils literal"><span class="pre">req.remote_addr</span></tt>.  <tt class="docutils literal"><span class="pre">remote.port</span></tt> is not
+available.  <tt class="docutils literal"><span class="pre">remote.name</span></tt> is in
+<tt class="docutils literal"><span class="pre">req.environ.get('REMOTE_HOST')</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">request_line</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">respond()</span></tt>:</dt>
+<dd>A method that is somewhat similar to <tt class="docutils literal"><span class="pre">req.get_response()</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">rfile</span></tt>:</dt>
+<dd><tt class="docutils literal"><span class="pre">req.body_file</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">run</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">server_protocol</span></tt>:</dt>
+<dd>As <tt class="docutils literal"><span class="pre">req.environ['SERVER_PROTOCOL']</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">show_tracebacks</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">throw_errors</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">throws</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">toolmaps</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">wsgi_environ</span></tt>:</dt>
+<dd>As <tt class="docutils literal"><span class="pre">req.environ</span></tt></dd>
+</dl>
+</div>
+<div class="section" id="id4">
+<h3><a class="toc-backref" href="#id27">Response</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>From information <a class="reference external" href="http://www.cherrypy.org/wiki/ResponseObject">from the wiki</a>.</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">body</span></tt>:</dt>
+<dd>This is an iterable in CherryPy, a string in WebOb;
+<tt class="docutils literal"><span class="pre">res.app_iter</span></tt> gives an iterable in WebOb.</dd>
+<dt><tt class="docutils literal"><span class="pre">check_timeout</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">collapse_body()</span></tt>:</dt>
+<dd>This turns a stream/iterator body into a single string.  Accessing
+<tt class="docutils literal"><span class="pre">res.body</span></tt> will do this automatically.</dd>
+<dt><tt class="docutils literal"><span class="pre">cookie</span></tt>:</dt>
+<dd>Accessible through <tt class="docutils literal"><span class="pre">res.set_cookie(...)</span></tt>, <tt class="docutils literal"><span class="pre">res.delete_cookie</span></tt>,
+<tt class="docutils literal"><span class="pre">res.unset_cookie()</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">finalize()</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">header_list</span></tt>:</dt>
+<dd>In <tt class="docutils literal"><span class="pre">res.headerlist</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">stream</span></tt>:</dt>
+<dd>This can make CherryPy stream the response body out directory.
+There is direct no equivalent; you can use a dynamically generated
+iterator to do something similar.</dd>
+<dt><tt class="docutils literal"><span class="pre">time</span></tt>:</dt>
+<dd>No equivalent</dd>
+<dt><tt class="docutils literal"><span class="pre">timed_out</span></tt>:</dt>
+<dd>No equivalent</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="yaro">
+<h2><a class="toc-backref" href="#id28">Yaro</a><a class="headerlink" href="#yaro" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://lukearno.com/projects/yaro/">Yaro</a> is a small wrapper around
+the WSGI environment, much like WebOb in scope.</p>
+<p>The WebOb objects have many more methods and attributes.  The Yaro
+Response object is a much smaller subset of WebOb&#8217;s Response.</p>
+<div class="section" id="id6">
+<h3><a class="toc-backref" href="#id29">Request</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">query</span></tt>:</dt>
+<dd>As <tt class="docutils literal"><span class="pre">req.GET</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">form</span></tt>:</dt>
+<dd>As <tt class="docutils literal"><span class="pre">req.POST</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">cookie</span></tt>:</dt>
+<dd>A <tt class="docutils literal"><span class="pre">SimpleCookie</span></tt> object in Yaro; a dictionary in WebOb
+(<tt class="docutils literal"><span class="pre">SimpleCookie</span></tt> can represent cookie parameters, but cookie
+parameters are only sent with responses not requests)</dd>
+<dt><tt class="docutils literal"><span class="pre">uri</span></tt>:</dt>
+<dd>Returns a URI object, no equivalent (only string URIs available).</dd>
+<dt><tt class="docutils literal"><span class="pre">redirect</span></tt>:</dt>
+<dd>Not available (response-related).  <tt class="docutils literal"><span class="pre">webob.exc.HTTPFound()</span></tt> can
+be useful here.</dd>
+<dt><tt class="docutils literal"><span class="pre">forward(yaroapp)</span></tt>, <tt class="docutils literal"><span class="pre">wsgi_forward(wsgiapp)</span></tt>:</dt>
+<dd>Available with <tt class="docutils literal"><span class="pre">req.get_response(app)</span></tt> and
+<tt class="docutils literal"><span class="pre">req.call_application(app)</span></tt>.  In both cases it is a WSGI
+application in WebOb, there is no special kind of communication;
+<tt class="docutils literal"><span class="pre">req.call_application()</span></tt> just returns a <tt class="docutils literal"><span class="pre">webob.Response</span></tt> object.</dd>
+<dt><tt class="docutils literal"><span class="pre">res</span></tt>:</dt>
+<dd>The request object in WebOb <em>may</em> have a <tt class="docutils literal"><span class="pre">req.response</span></tt>
+attribute.</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="werkzeug">
+<h2><a class="toc-backref" href="#id30">Werkzeug</a><a class="headerlink" href="#werkzeug" title="Permalink to this headline">¶</a></h2>
+<p>Probably not that many people know about this library, which is a
+offshoot of <a class="reference external" href="http://pocoo.org">Pocoo</a>, and used to go by another
+name (Columbrid?)  This library is based around WSGI, similar to Paste
+and Yaro.</p>
+<p>This is taken from the <a class="reference external" href="http://werkzeug.pocoo.org/documentation/wrappers">wrapper documentation</a>.</p>
+<div class="section" id="id7">
+<h3><a class="toc-backref" href="#id31">Request</a><a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>path:</dt>
+<dd>As <tt class="docutils literal"><span class="pre">req.path_info</span></tt></dd>
+<dt>args:</dt>
+<dd>As <tt class="docutils literal"><span class="pre">req.GET</span></tt></dd>
+<dt>form:</dt>
+<dd>As <tt class="docutils literal"><span class="pre">req.POST</span></tt></dd>
+<dt>values:</dt>
+<dd>As <tt class="docutils literal"><span class="pre">req.params</span></tt></dd>
+<dt>files:</dt>
+<dd>In <tt class="docutils literal"><span class="pre">req.POST</span></tt> (as FieldStorage objects)</dd>
+<dt>data:</dt>
+<dd>In <tt class="docutils literal"><span class="pre">req.body_file</span></tt></dd>
+</dl>
+</div>
+<div class="section" id="id8">
+<h3><a class="toc-backref" href="#id32">Response</a><a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>response:</dt>
+<dd>In <tt class="docutils literal"><span class="pre">res.body</span></tt> (settable as <tt class="docutils literal"><span class="pre">res.body</span></tt> or <tt class="docutils literal"><span class="pre">res.app_iter</span></tt>)</dd>
+<dt>status:</dt>
+<dd>In <tt class="docutils literal"><span class="pre">res.status_int</span></tt></dd>
+<dt>mimetype:</dt>
+<dd>In <tt class="docutils literal"><span class="pre">res.content_type</span></tt></dd>
+</dl>
+</div>
+</div>
+<div class="section" id="zope-3">
+<h2><a class="toc-backref" href="#id33">Zope 3</a><a class="headerlink" href="#zope-3" title="Permalink to this headline">¶</a></h2>
+<p>From the Zope 3 interfaces for the <a class="reference external" href="http://apidoc.zope.org/++apidoc++/Interface/zope.publisher.interfaces.browser.IBrowserRequest/index.html">Request</a>
+and <a class="reference external" href="http://apidoc.zope.org/++apidoc++/Interface/zope.publisher.interfaces.http.IHTTPResponse/index.html">Response</a>.</p>
+<div class="section" id="id11">
+<h3><a class="toc-backref" href="#id34">Request</a><a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">locale</span></tt>, <tt class="docutils literal"><span class="pre">setupLocale()</span></tt>:</dt>
+<dd>This is not fully calculated, but information is available in
+<tt class="docutils literal"><span class="pre">req.accept_languages</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">principal</span></tt>, <tt class="docutils literal"><span class="pre">setPrincipal(principal)</span></tt>:</dt>
+<dd><tt class="docutils literal"><span class="pre">req.remote_user</span></tt> gives the username, but there is no standard
+place for a user <em>object</em>.</dd>
+<dt><tt class="docutils literal"><span class="pre">publication</span></tt>, <tt class="docutils literal"><span class="pre">setPublication()</span></tt>,</dt>
+<dd>These are associated with the object publishing system in Zope.
+This kind of publishing system is outside the scope of WebOb.</dd>
+<dt><tt class="docutils literal"><span class="pre">traverse(object)</span></tt>, <tt class="docutils literal"><span class="pre">getTraversalStack()</span></tt>, <tt class="docutils literal"><span class="pre">setTraversalStack()</span></tt>:</dt>
+<dd>These all relate to traversal, which is part of the publishing
+system.</dd>
+<dt><tt class="docutils literal"><span class="pre">processInputs()</span></tt>, <tt class="docutils literal"><span class="pre">setPathSuffix(steps)</span></tt>:</dt>
+<dd>Also associated with traversal and preparing the request.</dd>
+<dt><tt class="docutils literal"><span class="pre">environment</span></tt>:</dt>
+<dd>In <tt class="docutils literal"><span class="pre">req.environ</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">bodyStream</span></tt>:</dt>
+<dd>In <tt class="docutils literal"><span class="pre">req.body_file</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">interaction</span></tt>:</dt>
+<dd>This is the security context for the request; all the possible
+participants or principals in the request.  There&#8217;s no
+equivalent.</dd>
+<dt><tt class="docutils literal"><span class="pre">annotations</span></tt>:</dt>
+<dd>Extra information associated with the request.  This would
+generally go in custom keys of <tt class="docutils literal"><span class="pre">req.environ</span></tt>, or if you set
+attributes those attributes are stored in
+<tt class="docutils literal"><span class="pre">req.environ['webob.adhoc_attrs']</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">debug</span></tt>:</dt>
+<dd>There is no standard debug flag for WebOb.</dd>
+<dt><tt class="docutils literal"><span class="pre">__getitem__(key)</span></tt>, <tt class="docutils literal"><span class="pre">get(key)</span></tt>, etc:</dt>
+<dd>These treat the request like a dictionary, which WebOb does not
+do.  They seem to take values from the environment, not
+parameters.  Also on the Zope request object is <tt class="docutils literal"><span class="pre">items()</span></tt>,
+<tt class="docutils literal"><span class="pre">__contains__(key)</span></tt>, <tt class="docutils literal"><span class="pre">__iter__()</span></tt>, <tt class="docutils literal"><span class="pre">keys()</span></tt>, <tt class="docutils literal"><span class="pre">__len__()</span></tt>,
+<tt class="docutils literal"><span class="pre">values()</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">getPositionalArguments()</span></tt>:</dt>
+<dd>I&#8217;m not sure what the equivalent would be, as there are no
+positional arguments during instantiation (it doesn&#8217;t fit into
+WSGI).  Maybe <tt class="docutils literal"><span class="pre">wsgiorg.urlvars</span></tt>?</dd>
+<dt><tt class="docutils literal"><span class="pre">retry()</span></tt>, <tt class="docutils literal"><span class="pre">supportsRetry()</span></tt>:</dt>
+<dd>Creates a new request that can be used to retry a request.
+Similar to <tt class="docutils literal"><span class="pre">req.copy()</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">close()</span></tt>, <tt class="docutils literal"><span class="pre">hold(obj)</span></tt>:</dt>
+<dd>This closes resources associated with the request, including any
+&#8220;held&#8221; objects.  There&#8217;s nothing similar.</dd>
+</dl>
+</div>
+<div class="section" id="id12">
+<h3><a class="toc-backref" href="#id35">Response</a><a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">authUser</span></tt>:</dt>
+<dd>Not sure what this is or does.</dd>
+<dt><tt class="docutils literal"><span class="pre">reset()</span></tt>:</dt>
+<dd>No direct equivalent; you&#8217;d have to do <tt class="docutils literal"><span class="pre">res.headers</span> <span class="pre">=</span> <span class="pre">[];</span>
+<span class="pre">res.body</span> <span class="pre">=</span> <span class="pre">'';</span> <span class="pre">res.status</span> <span class="pre">=</span> <span class="pre">200</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">setCookie(name,</span> <span class="pre">value,</span> <span class="pre">**kw)</span></tt>:</dt>
+<dd>Is <tt class="docutils literal"><span class="pre">res.set_cookie(...)</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">getCookie(name)</span></tt>:</dt>
+<dd>No equivalent.  Hm.</dd>
+<dt><tt class="docutils literal"><span class="pre">expireCookie(name)</span></tt>:</dt>
+<dd>Is <tt class="docutils literal"><span class="pre">res.delete_cookie(name)</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">appendToCookie(name,</span> <span class="pre">value)</span></tt>:</dt>
+<dd>This appends the value to any existing cookie (separating values
+with a colon).  WebOb does not do this.</dd>
+<dt><tt class="docutils literal"><span class="pre">setStatus(status)</span></tt>:</dt>
+<dd>Availble by setting <tt class="docutils literal"><span class="pre">res.status</span></tt> (can be set to an integer or a
+string of &#8220;code reason&#8221;).</dd>
+<dt><tt class="docutils literal"><span class="pre">getHeader(name,</span> <span class="pre">default=None)</span></tt>:</dt>
+<dd>Is <tt class="docutils literal"><span class="pre">res.headers.get(name)</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">getStatus()</span></tt>:</dt>
+<dd>Is <tt class="docutils literal"><span class="pre">res.status_int</span></tt> (or <tt class="docutils literal"><span class="pre">res.status</span></tt> to include reason)</dd>
+<dt><tt class="docutils literal"><span class="pre">addHeader(name,</span> <span class="pre">value)</span></tt>:</dt>
+<dd>Is <tt class="docutils literal"><span class="pre">res.headers.add(name,</span> <span class="pre">value)</span></tt> (in Zope and WebOb, this does
+not clobber any previous value).</dd>
+<dt><tt class="docutils literal"><span class="pre">getHeaders()</span></tt>:</dt>
+<dd>Is <tt class="docutils literal"><span class="pre">res.headerlist</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">setHeader(name,</span> <span class="pre">value)</span></tt>:</dt>
+<dd>Is <tt class="docutils literal"><span class="pre">res.headers[name]</span> <span class="pre">=</span> <span class="pre">value</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">getStatusString()</span></tt>:</dt>
+<dd>Is <tt class="docutils literal"><span class="pre">res.status</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">consumeBody()</span></tt>:</dt>
+<dd>This consumes any non-string body to turn the body into a single
+string.  Any access to <tt class="docutils literal"><span class="pre">res.body</span></tt> will do this (e.g., when you
+have set the <tt class="docutils literal"><span class="pre">res.app_iter</span></tt>).</dd>
+<dt><tt class="docutils literal"><span class="pre">internalError()</span></tt>:</dt>
+<dd>This is available with <tt class="docutils literal"><span class="pre">webob.exc.HTTP*()</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">handleException(exc_info)</span></tt>:</dt>
+<dd>This is provided with a tool like <tt class="docutils literal"><span class="pre">paste.exceptions</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">consumeBodyIter()</span></tt>:</dt>
+<dd>This returns the iterable for the body, even if the body was a
+string.  Anytime you access <tt class="docutils literal"><span class="pre">res.app_iter</span></tt> you will get an
+iterable.  <tt class="docutils literal"><span class="pre">res.body</span></tt> and <tt class="docutils literal"><span class="pre">res.app_iter</span></tt> can be interchanged
+and accessed as many times as you want, unlike the Zope
+equivalents.</dd>
+<dt><tt class="docutils literal"><span class="pre">setResult(result)</span></tt>:</dt>
+<dd><p class="first">You can achieve the same thing through <tt class="docutils literal"><span class="pre">res.body</span> <span class="pre">=</span> <span class="pre">result</span></tt>, or
+<tt class="docutils literal"><span class="pre">res.app_iter</span> <span class="pre">=</span> <span class="pre">result</span></tt>.  <tt class="docutils literal"><span class="pre">res.body</span></tt> accepts None, a unicode
+string (<em>if</em> you have set a charset) or a normal string.
+<tt class="docutils literal"><span class="pre">res.app_iter</span></tt> only accepts None and an interable.  You can&#8217;t
+update all of a response with one call.</p>
+<p class="last">Like in Zope, WebOb updates Content-Length.  Unlike Zope, it does
+not automatically calculate a charset.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="mod-python">
+<h2><a class="toc-backref" href="#id36">mod_python</a><a class="headerlink" href="#mod-python" title="Permalink to this headline">¶</a></h2>
+<p>Some key attributes from the <a class="reference external" href="http://modpython.org/live/current/doc-html/pyapi-mprequest-mem.html">mod_python</a>
+request object.</p>
+<div class="section" id="id14">
+<h3><a class="toc-backref" href="#id37">Request</a><a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">req.uri</span></tt>:</dt>
+<dd>In <tt class="docutils literal"><span class="pre">req.path</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">req.user</span></tt>:</dt>
+<dd>In <tt class="docutils literal"><span class="pre">req.remote_user</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">req.get_remote_host()</span></tt>:</dt>
+<dd>In <tt class="docutils literal"><span class="pre">req.environ['REMOTE_ADDR']</span></tt> or <tt class="docutils literal"><span class="pre">req.remote_addr</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">req.headers_in.get('referer')</span></tt>:</dt>
+<dd>In <tt class="docutils literal"><span class="pre">req.headers.get('referer')</span></tt> or <tt class="docutils literal"><span class="pre">req.referer</span></tt> (same pattern
+for other request headers, presumably).</dd>
+</dl>
+</div>
+<div class="section" id="id15">
+<h3><a class="toc-backref" href="#id38">Response</a><a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<p><tt class="docutils literal"><span class="pre">util.redirect</span></tt> or <tt class="docutils literal"><span class="pre">req.status</span> <span class="pre">=</span> <span class="pre">apache.HTTP_MOVED_TEMPORARILY</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">webob.exc</span> <span class="kn">import</span> <span class="n">HTTPTemporaryRedirect</span>
+<span class="n">exc</span> <span class="o">=</span> <span class="n">HTTPTemporaryRedirect</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="n">url</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">exc</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">req.content_type</span> <span class="pre">=</span> <span class="pre">&quot;application/x-csv&quot;</span></tt> and
+<tt class="docutils literal"><span class="pre">req.headers_out.add('Content-Disposition',</span> <span class="pre">'attachment;filename=somefile.csv')</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">res</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">ResponseClass</span><span class="p">()</span>
+<span class="n">res</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s">&#39;application/x-csv&#39;</span>
+<span class="n">res</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;Content-Disposition&#39;</span><span class="p">,</span> <span class="s">&#39;attachment;filename=somefile.csv&#39;</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">res</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="webapp-response">
+<h2><a class="toc-backref" href="#id39">webapp Response</a><a class="headerlink" href="#webapp-response" title="Permalink to this headline">¶</a></h2>
+<p>The Google App Engine <a class="reference external" href="http://code.google.com/appengine/docs/python/tools/webapp/">webapp</a>
+framework uses the WebOb Request object, but does not use its Response
+object.</p>
+<p>The constructor for <tt class="docutils literal"><span class="pre">webapp.Response</span></tt> does not take any arguments.
+The response is created by the framework, so you don&#8217;t use it like
+<tt class="docutils literal"><span class="pre">return</span> <span class="pre">Response(...)</span></tt>, instead you use <tt class="docutils literal"><span class="pre">self.response</span></tt>.  Also the
+response object automatically has <tt class="docutils literal"><span class="pre">Cache-Control:</span> <span class="pre">no-cache</span></tt> set,
+while the WebOb response does not set any cache headers.</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">resp.set_status(code,</span> <span class="pre">message=None)</span></tt>:</dt>
+<dd>This is handled by setting the <tt class="docutils literal"><span class="pre">resp.status</span></tt> attribute.</dd>
+<dt><tt class="docutils literal"><span class="pre">resp.clear()</span></tt>:</dt>
+<dd>You&#8217;d do <tt class="docutils literal"><span class="pre">resp.body</span> <span class="pre">=</span> <span class="pre">&quot;&quot;</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">resp.wsgi_write(start_response)</span></tt>:</dt>
+<dd>This writes the response using the <tt class="docutils literal"><span class="pre">start_response</span></tt> callback,
+and using the <tt class="docutils literal"><span class="pre">start_response</span></tt> writer.  The WebOb response
+object is called as a WSGI app (<tt class="docutils literal"><span class="pre">resp(environ,</span> <span class="pre">start_response)</span></tt>)
+to do the equivalent.</dd>
+<dt><tt class="docutils literal"><span class="pre">resp.out.write(text)</span></tt>:</dt>
+<dd>This writes to an internal <tt class="docutils literal"><span class="pre">StringIO</span></tt> instance of the response.
+This uses the ability of the standard StringIO object to hold
+either unicode or <tt class="docutils literal"><span class="pre">str</span></tt> text, and so long as you are always
+consistent it will encode your content (but it does not respect
+your preferred encoding, it always uses UTF-8).  The WebOb method
+<tt class="docutils literal"><span class="pre">resp.write(text)</span></tt> is basically equivalent, and also accepts
+unicode (using <tt class="docutils literal"><span class="pre">resp.charset</span></tt> for the encoding).  You can also
+write to <tt class="docutils literal"><span class="pre">resp.body_file</span></tt>, but it does not allow unicode.</dd>
+</dl>
+<p>Besides exposing a <tt class="docutils literal"><span class="pre">.headers</span></tt> attribute (based on
+<a class="reference external" href="http://docs.python.org/library/wsgiref.html#wsgiref.headers.Headers">wsgiref.headers.Headers</a>)
+there is no other API for the webapp response object.  This means the
+response lacks:</p>
+<ul class="simple">
+<li>A usefully readable body or status.</li>
+<li>A useful constructor that makes it easy to treat responses like
+objects.</li>
+<li>Providing a non-string <tt class="docutils literal"><span class="pre">app_iter</span></tt> for the body (like a generator).</li>
+<li>Parsing of the Content-Type charset.</li>
+<li>Getter/setters for parsed forms of headers, specifically
+cache_control and last_modified.</li>
+<li>The <tt class="docutils literal"><span class="pre">cache_expires</span></tt> method</li>
+<li><tt class="docutils literal"><span class="pre">set_cookie</span></tt>, <tt class="docutils literal"><span class="pre">delete_cookie</span></tt>, and <tt class="docutils literal"><span class="pre">unset_cookie</span></tt>.  Instead
+you have to simply manually set the Set-Cookie header.</li>
+<li><tt class="docutils literal"><span class="pre">encode_content</span></tt> and <tt class="docutils literal"><span class="pre">decode_content</span></tt> for handling gzip encoding.</li>
+<li><tt class="docutils literal"><span class="pre">md5_etag()</span></tt> for generating an etag from the body.</li>
+<li>Conditional responses that will return 304 based on the response and
+request headers.</li>
+<li>The ability to serve Range request automatically.</li>
+</ul>
+</div>
+<div class="section" id="php">
+<h2><a class="toc-backref" href="#id40">PHP</a><a class="headerlink" href="#php" title="Permalink to this headline">¶</a></h2>
+<p>PHP does not have anything really resembling a request and response
+object.  Instead these are encoded in a set of global objects for the
+request and functions for the response.</p>
+<div class="section" id="post-get-files">
+<h3><a class="toc-backref" href="#id41"><tt class="docutils literal"><span class="pre">$_POST</span></tt>, <tt class="docutils literal"><span class="pre">$_GET</span></tt>, <tt class="docutils literal"><span class="pre">$_FILES</span></tt></a><a class="headerlink" href="#post-get-files" title="Permalink to this headline">¶</a></h3>
+<p>These represent <tt class="docutils literal"><span class="pre">req.POST</span></tt> and <tt class="docutils literal"><span class="pre">req.GET</span></tt>.</p>
+<p>PHP uses the variable names to tell whether a variable can hold
+multiple values.  For instance <tt class="docutils literal"><span class="pre">$_POST['name[]']</span></tt>, which will be an
+array.  In WebOb any variable can have multiple values, and you can
+get these through <tt class="docutils literal"><span class="pre">req.POST.getall('name')</span></tt>.</p>
+<p>The files in <tt class="docutils literal"><span class="pre">$_FILES</span></tt> are simply in <tt class="docutils literal"><span class="pre">req.POST</span></tt> in WebOb, as
+FieldStorage instances.</p>
+</div>
+<div class="section" id="cookies">
+<h3><a class="toc-backref" href="#id42"><tt class="docutils literal"><span class="pre">$_COOKIES</span></tt></a><a class="headerlink" href="#cookies" title="Permalink to this headline">¶</a></h3>
+<p>This is in <tt class="docutils literal"><span class="pre">req.cookies</span></tt>.</p>
+</div>
+<div class="section" id="server-request-env">
+<h3><a class="toc-backref" href="#id43"><tt class="docutils literal"><span class="pre">$_SERVER</span></tt>, <tt class="docutils literal"><span class="pre">$_REQUEST</span></tt>, <tt class="docutils literal"><span class="pre">$_ENV</span></tt></a><a class="headerlink" href="#server-request-env" title="Permalink to this headline">¶</a></h3>
+<p>These are all in <tt class="docutils literal"><span class="pre">req.environ</span></tt>.  These are not split up like they
+are in PHP, it&#8217;s all just one dictionary.  Everything that would
+typically be in <tt class="docutils literal"><span class="pre">$_ENV</span></tt> is technically optional, and outside of a
+couple CGI-standard keys in <tt class="docutils literal"><span class="pre">$_SERVER</span></tt> most of those are also
+optional, but it is common for WSGI servers to populate the request
+with similar information as PHP.</p>
+</div>
+<div class="section" id="http-raw-post-data">
+<h3><a class="toc-backref" href="#id44"><tt class="docutils literal"><span class="pre">$HTTP_RAW_POST_DATA</span></tt></a><a class="headerlink" href="#http-raw-post-data" title="Permalink to this headline">¶</a></h3>
+<p>This contains the unparsed data in the request body.  This is in
+<tt class="docutils literal"><span class="pre">req.body</span></tt>.</p>
+</div>
+<div class="section" id="the-response">
+<h3><a class="toc-backref" href="#id45">The response</a><a class="headerlink" href="#the-response" title="Permalink to this headline">¶</a></h3>
+<p>Response headers in PHP are sent with <tt class="docutils literal"><span class="pre">header(&quot;Header-Name:</span>
+<span class="pre">value&quot;)</span></tt>.  In WebOb there is a dictionary in <tt class="docutils literal"><span class="pre">resp.headers</span></tt> that
+can have values set; the headers aren&#8217;t actually sent until you send
+the response.  You can add headers without overwriting (the equivalent
+of <tt class="docutils literal"><span class="pre">header(&quot;...&quot;,</span> <span class="pre">false)</span></tt>) with <tt class="docutils literal"><span class="pre">resp.headers.add('Header-Name',</span>
+<span class="pre">'value')</span></tt>.</p>
+<p>The status in PHP is sent with <tt class="docutils literal"><span class="pre">http_send_status(code)</span></tt>.  In WebOb
+this is <tt class="docutils literal"><span class="pre">resp.status</span> <span class="pre">=</span> <span class="pre">code</span></tt>.</p>
+<p>The body in PHP is sent implicitly through the rendering of the PHP
+body (or with <tt class="docutils literal"><span class="pre">echo</span></tt> or any other functions that send output).</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Differences Between WebOb and Other Systems</a><ul>
+<li><a class="reference external" href="#paste-wsgiwrappers-and-pylons">paste.wsgiwrappers and Pylons</a><ul>
+<li><a class="reference external" href="#request">Request</a></li>
+<li><a class="reference external" href="#response">Response</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#django">Django</a><ul>
+<li><a class="reference external" href="#id1">Request</a></li>
+<li><a class="reference external" href="#querydict">QueryDict</a></li>
+<li><a class="reference external" href="#id2">Response</a></li>
+<li><a class="reference external" href="#response-subclasses">Response Subclasses</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#cherrypy-turbogears">CherryPy/TurboGears</a><ul>
+<li><a class="reference external" href="#id3">Request</a></li>
+<li><a class="reference external" href="#id4">Response</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#yaro">Yaro</a><ul>
+<li><a class="reference external" href="#id6">Request</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#werkzeug">Werkzeug</a><ul>
+<li><a class="reference external" href="#id7">Request</a></li>
+<li><a class="reference external" href="#id8">Response</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#zope-3">Zope 3</a><ul>
+<li><a class="reference external" href="#id11">Request</a></li>
+<li><a class="reference external" href="#id12">Response</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#mod-python">mod_python</a><ul>
+<li><a class="reference external" href="#id14">Request</a></li>
+<li><a class="reference external" href="#id15">Response</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#webapp-response">webapp Response</a></li>
+<li><a class="reference external" href="#php">PHP</a><ul>
+<li><a class="reference external" href="#post-get-files"><tt class="docutils literal"><span class="pre">$_POST</span></tt>, <tt class="docutils literal"><span class="pre">$_GET</span></tt>, <tt class="docutils literal"><span class="pre">$_FILES</span></tt></a></li>
+<li><a class="reference external" href="#cookies"><tt class="docutils literal"><span class="pre">$_COOKIES</span></tt></a></li>
+<li><a class="reference external" href="#server-request-env"><tt class="docutils literal"><span class="pre">$_SERVER</span></tt>, <tt class="docutils literal"><span class="pre">$_REQUEST</span></tt>, <tt class="docutils literal"><span class="pre">$_ENV</span></tt></a></li>
+<li><a class="reference external" href="#http-raw-post-data"><tt class="docutils literal"><span class="pre">$HTTP_RAW_POST_DATA</span></tt></a></li>
+<li><a class="reference external" href="#the-response">The response</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="modules/dec.html"
+                                  title="previous chapter"><tt class="docutils literal"><span class="pre">webob.dec</span></tt> &#8211; WSGIfy decorator</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="file-example.html"
+                                  title="next chapter">WebOb File-Serving Example</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/differences.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="file-example.html" title="WebOb File-Serving Example"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="modules/dec.html" title="webob.dec – WSGIfy decorator"
+             >previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2008, Ian Bicking.
+      Last updated on Feb 03, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

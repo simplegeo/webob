@@ -1,0 +1,504 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Comment Example &mdash; WebOb v0.9.8 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.9.8',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="WebOb v0.9.8 documentation" href="index.html" />
+    <link rel="next" title="JSON-RPC Example" href="jsonrpc-example.html" />
+    <link rel="prev" title="Wiki Example" href="wiki-example.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="jsonrpc-example.html" title="JSON-RPC Example"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="wiki-example.html" title="Wiki Example"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="comment-example">
+<h1><a class="toc-backref" href="#id1">Comment Example</a><a class="headerlink" href="#comment-example" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#comment-example" id="id1">Comment Example</a><ul>
+<li><a class="reference internal" href="#introduction" id="id2">Introduction</a></li>
+<li><a class="reference internal" href="#code" id="id3">Code</a></li>
+<li><a class="reference internal" href="#instantiating-middleware" id="id4">Instantiating Middleware</a></li>
+<li><a class="reference internal" href="#the-middleware" id="id5">The Middleware</a></li>
+<li><a class="reference internal" href="#accepting-comments" id="id6">Accepting Comments</a><ul>
+<li><a class="reference internal" href="#submit-form" id="id7">submit_form</a></li>
+<li><a class="reference internal" href="#process-comment" id="id8">process_comment</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#conclusion" id="id9">Conclusion</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="introduction">
+<h2><a class="toc-backref" href="#id2">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This is an example of how to write WSGI middleware with WebOb.  The
+specific example adds a simple comment form to HTML web pages; any
+page served through the middleware that is HTML gets a comment form
+added to it, and shows any existing comments.</p>
+</div>
+<div class="section" id="code">
+<h2><a class="toc-backref" href="#id3">Code</a><a class="headerlink" href="#code" title="Permalink to this headline">¶</a></h2>
+<p>The finished code for this is available in
+<a class="reference external" href="http://bitbucket.org/ianb/webob/src/tip/docs/comment-example-code/example.py">docs/comment-example-code/example.py</a>
+&#8211; you can run that file as a script to try it out.</p>
+</div>
+<div class="section" id="instantiating-middleware">
+<h2><a class="toc-backref" href="#id4">Instantiating Middleware</a><a class="headerlink" href="#instantiating-middleware" title="Permalink to this headline">¶</a></h2>
+<p>Middleware of any complexity at all is usually best created as a
+class with its configuration as arguments to that class.</p>
+<p>Every middleware needs an application (<tt class="docutils literal"><span class="pre">app</span></tt>) that it wraps.  This
+middleware also needs a location to store the comments; we&#8217;ll put them
+all in a single directory.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="k">class</span> <span class="nc">Commenter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="n">storage_dir</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">storage_dir</span> <span class="o">=</span> <span class="n">storage_dir</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">storage_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">storage_dir</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When you use this middleware, you&#8217;ll use it like:</p>
+<div class="highlight-python"><pre>app = ... make the application ...
+app = Commenter(app, storage_dir='./comments')</pre>
+</div>
+<p>For our application we&#8217;ll use a simple static file server that is
+included with <a class="reference external" href="http://pythonpaste.org">Paste</a> (use <tt class="docutils literal"><span class="pre">easy_install</span>
+<span class="pre">Paste</span></tt> to install this).  The setup is all at the bottom of
+<tt class="docutils literal"><span class="pre">example.py</span></tt>, and looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">optparse</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">optparse</span><span class="o">.</span><span class="n">OptionParser</span><span class="p">(</span>
+        <span class="n">usage</span><span class="o">=</span><span class="s">&#39;%prog --port=PORT BASE_DIRECTORY&#39;</span>
+        <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&#39;-p&#39;</span><span class="p">,</span> <span class="s">&#39;--port&#39;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s">&#39;8080&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;port&#39;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="s">&#39;int&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&#39;Port to serve on (default 8080)&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&#39;--comment-data&#39;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s">&#39;./comments&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;comment_data&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&#39;Place to put comment data into (default ./comments/)&#39;</span><span class="p">)</span>
+    <span class="n">options</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;You must give a BASE_DIRECTORY&#39;</span><span class="p">)</span>
+    <span class="n">base_dir</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span>
+    <span class="kn">from</span> <span class="nn">paste.urlparser</span> <span class="kn">import</span> <span class="n">StaticURLParser</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">StaticURLParser</span><span class="p">(</span><span class="n">base_dir</span><span class="p">)</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">Commenter</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">comment_data</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">wsgiref.simple_server</span> <span class="kn">import</span> <span class="n">make_server</span>
+    <span class="n">httpd</span> <span class="o">=</span> <span class="n">make_server</span><span class="p">(</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="n">app</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&#39;Serving on http://localhost:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">options</span><span class="o">.</span><span class="n">port</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">httpd</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&#39;^C&#39;</span>
+</pre></div>
+</div>
+<p>I won&#8217;t explain it here, but basically it takes some options, creates
+an application that serves static files
+(<tt class="docutils literal"><span class="pre">StaticURLParser(base_dir)</span></tt>), wraps it with <tt class="docutils literal"><span class="pre">Commenter(app,</span>
+<span class="pre">options.comment_data)</span></tt> then serves that.</p>
+</div>
+<div class="section" id="the-middleware">
+<h2><a class="toc-backref" href="#id5">The Middleware</a><a class="headerlink" href="#the-middleware" title="Permalink to this headline">¶</a></h2>
+<p>While we&#8217;ve created the class structure for the middleware, it doesn&#8217;t
+actually do anything.  Here&#8217;s a kind of minimal version of the
+middleware (using WebOb):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">Request</span>
+
+<span class="k">class</span> <span class="nc">Commenter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="n">storage_dir</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">storage_dir</span> <span class="o">=</span> <span class="n">storage_dir</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">storage_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">storage_dir</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resp</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This doesn&#8217;t modify the response it any way.  You could write it like
+this without WebOb:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Commenter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>But it won&#8217;t be as convenient later.  First, lets create a little bit
+of infrastructure for our middleware.  We need to save and load
+per-url data (the comments themselves).  We&#8217;ll keep them in pickles,
+where each url has a pickle named after the url (but double-quoted, so
+<tt class="docutils literal"><span class="pre">http://localhost:8080/index.html</span></tt> becomes
+<tt class="docutils literal"><span class="pre">http%3A%2F%2Flocalhost%3A8080%2Findex.html</span></tt>).</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cPickle</span> <span class="kn">import</span> <span class="n">load</span><span class="p">,</span> <span class="n">dump</span>
+
+<span class="k">class</span> <span class="nc">Commenter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_filename</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">save_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_filename</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">)</span>
+        <span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">url_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
+        <span class="c"># Double-quoting makes the filename safe</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_dir</span><span class="p">,</span> <span class="n">urllib</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>You can get the full request URL with <tt class="docutils literal"><span class="pre">req.url</span></tt>, so to get the
+comment data with these methods you do <tt class="docutils literal"><span class="pre">data</span> <span class="pre">=</span>
+<span class="pre">self.get_data(req.url)</span></tt>.</p>
+<p>Now we&#8217;ll update the <tt class="docutils literal"><span class="pre">__call__</span></tt> method to filter <em>some</em> responses,
+and get the comment data for those.  We don&#8217;t want to change responses
+that were error responses (anything but <tt class="docutils literal"><span class="pre">200</span></tt>), nor do we want to
+filter responses that aren&#8217;t HTML.  So we get:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Commenter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">content_type</span> <span class="o">!=</span> <span class="s">&#39;text/html&#39;</span> <span class="ow">or</span> <span class="n">resp</span><span class="o">.</span><span class="n">status_int</span> <span class="o">!=</span> <span class="mf">200</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">resp</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+        <span class="o">...</span> <span class="n">do</span> <span class="n">stuff</span> <span class="k">with</span> <span class="n">data</span><span class="p">,</span> <span class="n">update</span> <span class="n">resp</span> <span class="o">...</span>
+        <span class="k">return</span> <span class="n">resp</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>So far we&#8217;re punting on actually adding the comments to the page.  We
+also haven&#8217;t defined what <tt class="docutils literal"><span class="pre">data</span></tt> will hold.  Let&#8217;s say it&#8217;s a list
+of dictionaries, where each dictionary looks like <tt class="docutils literal"><span class="pre">{'name':</span> <span class="pre">'John</span>
+<span class="pre">Doe',</span> <span class="pre">'homepage':</span> <span class="pre">'http://blog.johndoe.com',</span> <span class="pre">'comments':</span> <span class="pre">'Great</span>
+<span class="pre">site!'}</span></tt>.</p>
+<p>We&#8217;ll also need a simple method to add stuff to the page.  We&#8217;ll use a
+regular expression to find the end of the page and put text in:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">re</span>
+
+<span class="k">class</span> <span class="nc">Commenter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="n">_end_body_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;&lt;/body.*?&gt;&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="o">|</span><span class="n">re</span><span class="o">.</span><span class="n">S</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">add_to_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">html</span><span class="p">,</span> <span class="n">extra_html</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds extra_html to the end of the html page (before &lt;/body&gt;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_body_re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">html</span> <span class="o">+</span> <span class="n">extra_html</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">html</span><span class="p">[:</span><span class="n">match</span><span class="o">.</span><span class="n">start</span><span class="p">()]</span> <span class="o">+</span> <span class="n">extra_html</span> <span class="o">+</span> <span class="n">html</span><span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">start</span><span class="p">():]</span>
+</pre></div>
+</div>
+<p>And then we&#8217;ll use it like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+<span class="n">body</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">body</span>
+<span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_to_end</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_comments</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+<span class="n">resp</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">body</span>
+<span class="k">return</span> <span class="n">resp</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We get the body, update it, and put it back in the response.  This
+also updates <tt class="docutils literal"><span class="pre">Content-Length</span></tt>.  Then we define:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">html_escape</span>
+
+<span class="k">class</span> <span class="nc">Commenter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">format_comments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comments</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">comments</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;&#39;</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">text</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;&lt;hr&gt;&#39;</span><span class="p">)</span>
+        <span class="n">text</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;&lt;h2&gt;&lt;a name=&quot;comment-area&quot;&gt;&lt;/a&gt;Comments (</span><span class="si">%s</span><span class="s">):&lt;/h2&gt;&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">comments</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">comment</span> <span class="ow">in</span> <span class="n">comments</span><span class="p">:</span>
+            <span class="n">text</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;&lt;h3&gt;&lt;a href=&quot;</span><span class="si">%s</span><span class="s">&quot;&gt;</span><span class="si">%s</span><span class="s">&lt;/a&gt; at </span><span class="si">%s</span><span class="s">:&lt;/h3&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">html_escape</span><span class="p">(</span><span class="n">comment</span><span class="p">[</span><span class="s">&#39;homepage&#39;</span><span class="p">]),</span> <span class="n">html_escape</span><span class="p">(</span><span class="n">comment</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]),</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%c</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">comment</span><span class="p">[</span><span class="s">&#39;time&#39;</span><span class="p">])))</span>
+            <span class="c"># Susceptible to XSS attacks!:</span>
+            <span class="n">text</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">comment</span><span class="p">[</span><span class="s">&#39;comments&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We put in a header (with an anchor we&#8217;ll use later), and a section for
+each comment.  Note that <tt class="docutils literal"><span class="pre">html_escape</span></tt> is the same as <tt class="docutils literal"><span class="pre">cgi.escape</span></tt>
+and just turns <tt class="docutils literal"><span class="pre">&amp;</span></tt> into <tt class="docutils literal"><span class="pre">&amp;amp;</span></tt>, etc.</p>
+<p>Because we put in some text without quoting it is susceptible to a
+<a class="reference external" href="http://en.wikipedia.org/wiki/Cross-site_scripting">Cross-Site Scripting</a> attack.  Fixing
+that is beyond the scope of this tutorial; you could quote it or clean
+it with something like <a class="reference external" href="http://codespeak.net/lxml/lxmlhtml.html#cleaning-up-html">lxml.html.clean</a>.</p>
+</div>
+<div class="section" id="accepting-comments">
+<h2><a class="toc-backref" href="#id6">Accepting Comments</a><a class="headerlink" href="#accepting-comments" title="Permalink to this headline">¶</a></h2>
+<p>All of those pieces <em>display</em> comments, but still no one can actually
+make comments.  To handle this we&#8217;ll take a little piece of the URL
+space for our own, everything under <tt class="docutils literal"><span class="pre">/.comments</span></tt>, so when someone
+POSTs there it will add a comment.</p>
+<p>When the request comes in there are two parts to the path:
+<tt class="docutils literal"><span class="pre">SCRIPT_NAME</span></tt> and <tt class="docutils literal"><span class="pre">PATH_INFO</span></tt>.  Everything in <tt class="docutils literal"><span class="pre">SCRIPT_NAME</span></tt> has
+already been parsed, and everything in <tt class="docutils literal"><span class="pre">PATH_INFO</span></tt> has yet to be
+parsed.  That means that the URL <em>without</em> <tt class="docutils literal"><span class="pre">PATH_INFO</span></tt> is the path
+to the middleware; we can intercept anything else below
+<tt class="docutils literal"><span class="pre">SCRIPT_NAME</span></tt> but nothing above it.  The name for the URL without
+<tt class="docutils literal"><span class="pre">PATH_INFO</span></tt> is <tt class="docutils literal"><span class="pre">req.application_url</span></tt>.  We have to capture it early
+to make sure it doesn&#8217;t change (since the WSGI application we are
+wrapping may update <tt class="docutils literal"><span class="pre">SCRIPT_NAME</span></tt> and <tt class="docutils literal"><span class="pre">PATH_INFO</span></tt>).</p>
+<p>So here&#8217;s what this all looks like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Commenter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">req</span><span class="o">.</span><span class="n">path_info_peek</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;.comments&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_comment</span><span class="p">(</span><span class="n">req</span><span class="p">)(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+        <span class="c"># This is the base path of *this* middleware:</span>
+        <span class="n">base_url</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">application_url</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">content_type</span> <span class="o">!=</span> <span class="s">&#39;text/html&#39;</span> <span class="ow">or</span> <span class="n">resp</span><span class="o">.</span><span class="n">status_int</span> <span class="o">!=</span> <span class="mf">200</span><span class="p">:</span>
+            <span class="c"># Not an HTML response, we don&#39;t want to</span>
+            <span class="c"># do anything to it</span>
+            <span class="k">return</span> <span class="n">resp</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+        <span class="c"># Make sure the content isn&#39;t gzipped:</span>
+        <span class="n">resp</span><span class="o">.</span><span class="n">decode_content</span><span class="p">()</span>
+        <span class="n">comments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">body</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_to_end</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_comments</span><span class="p">(</span><span class="n">comments</span><span class="p">))</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_to_end</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_form</span><span class="p">(</span><span class="n">base_url</span><span class="p">,</span> <span class="n">req</span><span class="p">))</span>
+        <span class="n">resp</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">body</span>
+        <span class="k">return</span> <span class="n">resp</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">base_url</span></tt> is the path where the middleware is located (if you run
+the example server, it will be <tt class="docutils literal"><span class="pre">http://localhost:PORT/</span></tt>).  We use
+<tt class="docutils literal"><span class="pre">req.path_info_peek()</span></tt> to look at the next segment of the URL &#8211;
+what comes after base_url.  If it is <tt class="docutils literal"><span class="pre">.comments</span></tt> then we handle it
+internally and don&#8217;t pass the request on.</p>
+<p>We also put in a little guard, <tt class="docutils literal"><span class="pre">resp.decode_content()</span></tt> in case the
+application returns a gzipped response.</p>
+<p>Then we get the data, add the comments, add the <em>form</em> to make new
+comments, and return the result.</p>
+<div class="section" id="submit-form">
+<h3><a class="toc-backref" href="#id7">submit_form</a><a class="headerlink" href="#submit-form" title="Permalink to this headline">¶</a></h3>
+<p>Here&#8217;s what the form looks like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Commenter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">submit_form</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_path</span><span class="p">,</span> <span class="n">req</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;&#39;&#39;&lt;h2&gt;Leave a comment:&lt;/h2&gt;</span>
+<span class="s">        &lt;form action=&quot;</span><span class="si">%s</span><span class="s">/.comments&quot; method=&quot;POST&quot;&gt;</span>
+<span class="s">         &lt;input type=&quot;hidden&quot; name=&quot;url&quot; value=&quot;</span><span class="si">%s</span><span class="s">&quot;&gt;</span>
+<span class="s">         &lt;table width=&quot;100</span><span class="si">%%</span><span class="s">&quot;&gt;</span>
+<span class="s">          &lt;tr&gt;&lt;td&gt;Name:&lt;/td&gt;</span>
+<span class="s">              &lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;name&quot; style=&quot;width: 100</span><span class="si">%%</span><span class="s">&quot;&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="s">          &lt;tr&gt;&lt;td&gt;URL:&lt;/td&gt;</span>
+<span class="s">              &lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;homepage&quot; style=&quot;width: 100</span><span class="si">%%</span><span class="s">&quot;&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="s">         &lt;/table&gt;</span>
+<span class="s">         Comments:&lt;br&gt;</span>
+<span class="s">         &lt;textarea name=&quot;comments&quot; rows=10 style=&quot;width: 100</span><span class="si">%%</span><span class="s">&quot;&gt;&lt;/textarea&gt;&lt;br&gt;</span>
+<span class="s">         &lt;input type=&quot;submit&quot; value=&quot;Submit comment&quot;&gt;</span>
+<span class="s">        &lt;/form&gt;</span>
+<span class="s">        &#39;&#39;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">base_path</span><span class="p">,</span> <span class="n">html_escape</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">url</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Nothing too exciting.  It submits a form with the keys <tt class="docutils literal"><span class="pre">url</span></tt> (the
+URL being commented on), <tt class="docutils literal"><span class="pre">name</span></tt>, <tt class="docutils literal"><span class="pre">homepage</span></tt>, and <tt class="docutils literal"><span class="pre">comments</span></tt>.</p>
+</div>
+<div class="section" id="process-comment">
+<h3><a class="toc-backref" href="#id8">process_comment</a><a class="headerlink" href="#process-comment" title="Permalink to this headline">¶</a></h3>
+<p>If you look at the method call, what we do is call the method then
+treat the result as a WSGI application:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_comment</span><span class="p">(</span><span class="n">req</span><span class="p">)(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You could write this as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_comment</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">response</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A common pattern in WSGI middleware that <em>doesn&#8217;t</em> use WebOb is to
+just do:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_comment</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>But the WebOb style makes it easier to modify the response if you want
+to; modifying a traditional WSGI response/application output requires
+changing your logic flow considerably.</p>
+<p>Here&#8217;s the actual processing code:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">exc</span>
+<span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">Response</span>
+
+<span class="k">class</span> <span class="nc">Commenter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">process_comment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;url&#39;</span><span class="p">]</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span>
+            <span class="n">homepage</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;homepage&#39;</span><span class="p">]</span>
+            <span class="n">comments</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;comments&#39;</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPBadRequest</span><span class="p">(</span><span class="s">&#39;Missing parameter: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">resp</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">homepage</span><span class="o">=</span><span class="n">homepage</span><span class="p">,</span>
+            <span class="n">comments</span><span class="o">=</span><span class="n">comments</span><span class="p">,</span>
+            <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">gmtime</span><span class="p">()))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_data</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPSeeOther</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="n">url</span><span class="o">+</span><span class="s">&#39;#comment-area&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resp</span>
+</pre></div>
+</div>
+<p>We either give a Bad Request response (if the form submission is
+somehow malformed), or a redirect back to the original page.</p>
+<p>The classes in <tt class="docutils literal"><span class="pre">webob.exc</span></tt> (like <tt class="docutils literal"><span class="pre">HTTPBadRequest</span></tt> and
+<tt class="docutils literal"><span class="pre">HTTPSeeOther</span></tt>) are Response subclasses that can be used to quickly
+create responses for these non-200 cases where the response body
+usually doesn&#8217;t matter much.</p>
+</div>
+</div>
+<div class="section" id="conclusion">
+<h2><a class="toc-backref" href="#id9">Conclusion</a><a class="headerlink" href="#conclusion" title="Permalink to this headline">¶</a></h2>
+<p>This shows how to make response modifying middleware, which is
+probably the most difficult kind of middleware to write with WSGI &#8211;
+modifying the request is quite simple in comparison, as you simply
+update <tt class="docutils literal"><span class="pre">environ</span></tt>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Comment Example</a><ul>
+<li><a class="reference external" href="#introduction">Introduction</a></li>
+<li><a class="reference external" href="#code">Code</a></li>
+<li><a class="reference external" href="#instantiating-middleware">Instantiating Middleware</a></li>
+<li><a class="reference external" href="#the-middleware">The Middleware</a></li>
+<li><a class="reference external" href="#accepting-comments">Accepting Comments</a><ul>
+<li><a class="reference external" href="#submit-form">submit_form</a></li>
+<li><a class="reference external" href="#process-comment">process_comment</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#conclusion">Conclusion</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="wiki-example.html"
+                                  title="previous chapter">Wiki Example</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="jsonrpc-example.html"
+                                  title="next chapter">JSON-RPC Example</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/comment-example.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="jsonrpc-example.html" title="JSON-RPC Example"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="wiki-example.html" title="Wiki Example"
+             >previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2008, Ian Bicking.
+      Last updated on Feb 03, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

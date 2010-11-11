@@ -1,0 +1,503 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>News &mdash; WebOb v0.9.8 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.9.8',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="WebOb v0.9.8 documentation" href="index.html" />
+    <link rel="next" title="License" href="license.html" />
+    <link rel="prev" title="Another Do-It-Yourself Framework" href="do-it-yourself.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="license.html" title="License"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="do-it-yourself.html" title="Another Do-It-Yourself Framework"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="news">
+<h1><a class="toc-backref" href="#id18">News</a><a class="headerlink" href="#news" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#news" id="id18">News</a><ul>
+<li><a class="reference internal" href="#id1" id="id19">0.9.8</a></li>
+<li><a class="reference internal" href="#id2" id="id20">0.9.7.1</a></li>
+<li><a class="reference internal" href="#id3" id="id21">0.9.7</a></li>
+<li><a class="reference internal" href="#id4" id="id22">0.9.6.1</a></li>
+<li><a class="reference internal" href="#id5" id="id23">0.9.6</a></li>
+<li><a class="reference internal" href="#id6" id="id24">0.9.5</a></li>
+<li><a class="reference internal" href="#id7" id="id25">0.9.4</a></li>
+<li><a class="reference internal" href="#id8" id="id26">0.9.3</a></li>
+<li><a class="reference internal" href="#id9" id="id27">0.9.2</a></li>
+<li><a class="reference internal" href="#id10" id="id28">0.9.1</a></li>
+<li><a class="reference internal" href="#id11" id="id29">0.9</a><ul>
+<li><a class="reference internal" href="#backward-incompatible-changes" id="id30">Backward Incompatible Changes</a></li>
+<li><a class="reference internal" href="#bugfixes-and-small-changes" id="id31">Bugfixes and Small Changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id12" id="id32">0.8.5</a></li>
+<li><a class="reference internal" href="#id13" id="id33">0.8.4</a></li>
+<li><a class="reference internal" href="#id14" id="id34">0.8.3</a></li>
+<li><a class="reference internal" href="#id15" id="id35">0.8.2</a></li>
+<li><a class="reference internal" href="#id16" id="id36">0.8.1</a></li>
+<li><a class="reference internal" href="#id17" id="id37">0.8</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id19">0.9.8</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Fix issue with WSGIHTTPException inadvertently generating unicode body
+and failing to encode it</li>
+<li>WWW-Authenticate response header is accessible as
+<tt class="docutils literal"><span class="pre">response.www_authenticate</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">response.www_authenticate</span></tt> and <tt class="docutils literal"><span class="pre">request.authorization</span></tt> hold None
+or tuple <tt class="docutils literal"><span class="pre">(auth_method,</span> <span class="pre">params)</span></tt> where <tt class="docutils literal"><span class="pre">params</span></tt> is a dictionary
+(or a string when <tt class="docutils literal"><span class="pre">auth_method</span></tt> is not one of known auth schemes
+and for Authenticate: Basic ...)</li>
+<li>Don&#8217;t share response headers when getting a response like <tt class="docutils literal"><span class="pre">resp</span> <span class="pre">=</span>
+<span class="pre">req.get_response(some_app)</span></tt>; this can avoid some funny errors with
+modifying headers and reusing Response objects.</li>
+<li>Add <cite>overwrite</cite> argument to <tt class="xref docutils literal"><span class="pre">Response.set_cookie()</span></tt> that make the
+new value overwrite the previously set. <cite>False</cite> by default.</li>
+<li>Add <cite>strict</cite> argument to <tt class="xref docutils literal"><span class="pre">Response.unset_cookie()</span></tt> that controls
+if an exception should be raised in case there are no cookies to unset.
+<cite>True</cite> by default.</li>
+<li>Fix <tt class="docutils literal"><span class="pre">req.GET.copy()</span></tt></li>
+<li>Make sure that 304 Not Modified responses generated by
+<tt class="xref docutils literal"><span class="pre">Response.conditional_response_app()</span></tt> exclude Content-{Length/Type}
+headers</li>
+<li>Fix <tt class="docutils literal"><span class="pre">Response.copy()</span></tt> not being an independent copy</li>
+<li>When the requested range is not satisfiable, return a 416 error
+(was returning entire body)</li>
+<li>Truncate response for range requests that go beyond the end of body
+(was treating as invalid).</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id20">0.9.7.1</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Fix an import problem with Pylons</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h2><a class="toc-backref" href="#id21">0.9.7</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Moved repository from svn location to
+<a class="reference external" href="http://bitbucket.org/ianb/webob/">http://bitbucket.org/ianb/webob/</a></li>
+<li>Arguments to <tt class="xref docutils literal"><span class="pre">Accept.best_match()</span></tt> must be specific types,
+not wildcards. The server should know a list of specic types it can
+offer and use <tt class="docutils literal"><span class="pre">best_match</span></tt> to select a specific one.</li>
+<li>With <tt class="docutils literal"><span class="pre">req.accept.best_match([types])</span></tt> prefer the first type in the
+list (previously it preferred later types).</li>
+<li>Also, make sure that if the user-agent accepts multiple types and
+there are multiple matches to the types that the application offers,
+<tt class="docutils literal"><span class="pre">req.accept.best_match([..])</span></tt> returns the most specific match.
+So if the server can satisfy either <tt class="docutils literal"><span class="pre">image/*</span></tt> or <tt class="docutils literal"><span class="pre">text/plain</span></tt>
+types, the latter will be picked independent from the order the accepted
+or offered types are listed (given they have the same quality rating).</li>
+<li>Fix Range, Content-Range and AppIter support all of which were broken
+in many ways, incorrectly parsing ranges, reporting incorrect
+content-ranges, failing to generate the correct body to satisfy the range
+from <tt class="docutils literal"><span class="pre">app_iter</span></tt> etc.</li>
+<li>Fix assumption that presense of a <tt class="docutils literal"><span class="pre">seek</span></tt> method means that the stream
+is seekable.</li>
+<li>Add <tt class="docutils literal"><span class="pre">ubody</span></tt> alias for <tt class="docutils literal"><span class="pre">Response.unicode_body</span></tt></li>
+<li>Add Unicode versions of <tt class="docutils literal"><span class="pre">Request.script_name</span></tt> and <tt class="docutils literal"><span class="pre">path_info</span></tt>:
+<tt class="docutils literal"><span class="pre">uscript_name</span></tt> and <tt class="docutils literal"><span class="pre">upath_info</span></tt>.</li>
+<li>Split __init__.py into four modules: request, response, descriptors and
+datetime_utils.</li>
+<li>Fix <tt class="docutils literal"><span class="pre">Response.body</span></tt> access resetting Content-Length to zero
+for HEAD responses.</li>
+<li>Support passing Unicode bodies to <tt class="xref docutils literal"><span class="pre">WSGIHTTPException</span></tt>
+constructors.</li>
+<li>Make <tt class="docutils literal"><span class="pre">bool(req.accept)</span></tt> return <tt class="xref docutils literal"><span class="pre">False</span></tt> for requests with missing
+Accept header.</li>
+<li>Add HTTP version to <tt class="xref docutils literal"><span class="pre">Request.__str__()</span></tt> output.</li>
+<li>Resolve deprecation warnings for parse_qsl on Python 2.6 and newer.</li>
+<li>Fix <tt class="xref docutils literal"><span class="pre">Response.md5_etag()</span></tt> setting Content-MD5 in incorrect
+format.</li>
+<li>Add <tt class="docutils literal"><span class="pre">Request.authorization</span></tt> property for Authorization header.</li>
+<li>Make sure ETag value is always quoted (required by RFC)</li>
+<li>Moved most <tt class="docutils literal"><span class="pre">Request</span></tt> behavior into a new class named
+<tt class="docutils literal"><span class="pre">BaseRequest</span></tt>.  The <tt class="docutils literal"><span class="pre">Request</span></tt> class is now a superclass for
+<tt class="docutils literal"><span class="pre">BaseRequest</span></tt> and a simple mixin which manages
+<tt class="docutils literal"><span class="pre">environ['webob.adhoc_attrs']</span></tt> when <tt class="docutils literal"><span class="pre">__setitem__</span></tt>,
+<tt class="docutils literal"><span class="pre">__delitem__</span></tt> and <tt class="docutils literal"><span class="pre">__getitem__</span></tt> are called.  This allows
+framework developers who do not want the
+<tt class="docutils literal"><span class="pre">environ['webob.adhoc_attrs']</span></tt> mutation behavior from
+<tt class="docutils literal"><span class="pre">__setattr__</span></tt>.  (chrism)</li>
+<li>Added response attribute <tt class="docutils literal"><span class="pre">response.content_disposition</span></tt> for its
+associated header.</li>
+<li>Changed how <tt class="docutils literal"><span class="pre">charset</span></tt> is determined on <a title="webob.Request" class="reference external" href="modules/webob.html#webob.Request"><tt class="xref docutils literal"><span class="pre">webob.Request</span></tt></a>
+objects.  Now the <tt class="docutils literal"><span class="pre">charset</span></tt> parameter is read on the Content-Type
+header, if it is present.  Otherwise a <tt class="docutils literal"><span class="pre">default_charset</span></tt> parameter
+is read, or the <tt class="docutils literal"><span class="pre">charset</span></tt> argument to the Request constructor.
+This is more similar to how <a title="webob.Response" class="reference external" href="modules/webob.html#webob.Response"><tt class="xref docutils literal"><span class="pre">webob.Response</span></tt></a> handles the
+charset.</li>
+<li>Made the case of the Content-Type header consistent (note: this
+might break some doctests).</li>
+<li>Make <tt class="docutils literal"><span class="pre">req.GET</span></tt> settable, such that <tt class="docutils literal"><span class="pre">req.environ['QUERY_STRING']</span></tt>
+is updated.</li>
+<li>Fix problem with <tt class="docutils literal"><span class="pre">req.POST</span></tt> causing a re-parse of the body when
+you instantiate multiple <tt class="docutils literal"><span class="pre">Request</span></tt> objects over the same environ
+(e.g., when using middleware that looks at <tt class="docutils literal"><span class="pre">req.POST</span></tt>).</li>
+<li>Recreate the request body properly when a <tt class="docutils literal"><span class="pre">POST</span></tt> includes file
+uploads.</li>
+<li>When <tt class="docutils literal"><span class="pre">req.POST</span></tt> is updated, the generated body will include the
+new values.</li>
+<li>Added a <tt class="docutils literal"><span class="pre">POST</span></tt> parameter to <tt class="xref docutils literal"><span class="pre">webob.Request.blank()</span></tt>; when
+given this will create a request body for the POST parameters (list
+of two-tuples or dictionary-like object).  Note: this does not
+handle unicode or file uploads.</li>
+<li>Added method <tt class="xref docutils literal"><span class="pre">webob.Response.merge_cookies()</span></tt>, which takes the
+<tt class="docutils literal"><span class="pre">Set-Cookie</span></tt> headers from a Response, and merges them with another
+response or WSGI application.  (This is useful for flash messages.)</li>
+<li>Fix a problem with creating exceptions like
+<tt class="docutils literal"><span class="pre">webob.exc.HTTPNotFound(body='&lt;notfound/&gt;',</span>
+<span class="pre">content_type='application/xml')</span></tt> (i.e., non-HTML exceptions).</li>
+<li>When a Location header is not absolute in a Response, it will be
+made absolute when the Response is called as a WSGI application.
+This makes the response less bound to a specific request.</li>
+<li>Added <a title="" class="reference external" href="modules/dec.html#module-webob.dec"><tt class="xref docutils literal"><span class="pre">webob.dec</span></tt></a>, a decorator for making WSGI applications
+from functions with the signature <tt class="docutils literal"><span class="pre">resp</span> <span class="pre">=</span> <span class="pre">app(req)</span></tt>.</li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h2><a class="toc-backref" href="#id22">0.9.6.1</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Fixed <tt class="xref docutils literal"><span class="pre">Response.__init__()</span></tt>, which for some content types would
+raise an exception.</li>
+<li>The <tt class="docutils literal"><span class="pre">req.body</span></tt> property will not recreate a StringIO object
+unnecessarily when rereading the body.</li>
+</ul>
+</div>
+<div class="section" id="id5">
+<h2><a class="toc-backref" href="#id23">0.9.6</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Removed <cite>environ_getter</cite> from <a title="webob.Request" class="reference external" href="modules/webob.html#webob.Request"><tt class="xref docutils literal"><span class="pre">webob.Request</span></tt></a>.  This
+largely-unused option allowed a Request object to be instantiated
+with a dynamic underlying environ.  Since it wasn&#8217;t used much, and
+might have been ill-advised from the beginning, and affected
+performance, it has been removed (from Chris McDonough).</li>
+<li>Speed ups for <tt class="xref docutils literal"><span class="pre">webob.Response.__init__()</span></tt> and
+<tt class="xref docutils literal"><span class="pre">webob.Request.__init__()</span></tt></li>
+<li>Fix defaulting of <tt class="docutils literal"><span class="pre">CONTENT_TYPE</span></tt> instead of <tt class="docutils literal"><span class="pre">CONTENT_LENGTH</span></tt> to
+0 in <tt class="docutils literal"><span class="pre">Request.str_POST</span></tt>.</li>
+<li>Added <tt class="xref docutils literal"><span class="pre">webob.Response.copy()</span></tt></li>
+</ul>
+</div>
+<div class="section" id="id6">
+<h2><a class="toc-backref" href="#id24">0.9.5</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Fix <tt class="docutils literal"><span class="pre">Request.blank('/').copy()</span></tt> raising an exception.</li>
+<li>Fix a potential memory leak with HEAD requests and 304 responses.</li>
+<li>Make <a title="webob.html_escape" class="reference external" href="modules/webob.html#webob.html_escape"><tt class="xref docutils literal"><span class="pre">webob.html_escape()</span></tt></a> respect the <tt class="docutils literal"><span class="pre">.__html__()</span></tt> magic
+method, which allows you to use HTML in
+:class`webob.exc.HTTPException` instances.</li>
+<li>Handle unicode values for <tt class="docutils literal"><span class="pre">resp.location</span></tt>.</li>
+<li>Allow arbitrary keyword arguments to <tt class="docutils literal"><span class="pre">exc.HTTP*</span></tt> (the same
+keywords you can send to <a title="webob.Response" class="reference external" href="modules/webob.html#webob.Response"><tt class="xref docutils literal"><span class="pre">webob.Response</span></tt></a>).</li>
+<li>Allow setting <tt class="xref docutils literal"><span class="pre">webob.Response.cache_expires()</span></tt> (usually it is
+called as a method).  This is primarily to allow
+<tt class="docutils literal"><span class="pre">Response(cache_expires=True)</span></tt>.</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h2><a class="toc-backref" href="#id25">0.9.4</a><a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Quiet Python 2.6 deprecation warnings.</li>
+<li>Added an attribute <tt class="docutils literal"><span class="pre">unicode_errors</span></tt> to <a title="webob.Response" class="reference external" href="modules/webob.html#webob.Response"><tt class="xref docutils literal"><span class="pre">webob.Response</span></tt></a> &#8211;
+if set to something like <tt class="docutils literal"><span class="pre">unicode_errors='replace'</span></tt> it will decode
+<tt class="docutils literal"><span class="pre">resp.body</span></tt> appropriately.  The default is <tt class="docutils literal"><span class="pre">strict</span></tt> (which was
+the former un-overridable behavior).</li>
+</ul>
+</div>
+<div class="section" id="id8">
+<h2><a class="toc-backref" href="#id26">0.9.3</a><a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Make sure that if changing the body the Content-MD5 header is
+removed. (Otherwise a lot of middleware would accidentally
+corrupt responses).</li>
+<li>Fixed <tt class="docutils literal"><span class="pre">Response.encode_content('identity')</span></tt> case (was a no-op even
+for encoded bodies).</li>
+<li>Fixed <tt class="xref docutils literal"><span class="pre">Request.remove_conditional_headers()</span></tt> that was removing
+If-Match header instead of If-None-Match.</li>
+<li>Fixed <tt class="docutils literal"><span class="pre">resp.set_cookie(max_age=timedelta(...))</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">request.POST</span></tt> now supports PUT requests with the appropriate
+Content-Type.</li>
+</ul>
+</div>
+<div class="section" id="id9">
+<h2><a class="toc-backref" href="#id27">0.9.2</a><a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Add more arguments to <tt class="xref docutils literal"><span class="pre">Request.remove_conditional_headers()</span></tt>
+for more fine-grained control: <cite>remove_encoding</cite>, <cite>remove_range</cite>,
+<cite>remove_match</cite>, <cite>remove_modified</cite>. All of them are <cite>True</cite> by default.</li>
+<li>Add an <cite>set_content_md5</cite> argument to <tt class="xref docutils literal"><span class="pre">Response.md5_etag()</span></tt>
+that calculates and sets Content-MD5 reponse header from current
+body.</li>
+<li>Change formatting of cookie expires, to use the more traditional
+format <tt class="docutils literal"><span class="pre">Wed,</span> <span class="pre">5-May-2001</span> <span class="pre">15:34:10</span> <span class="pre">GMT</span></tt> (dashes instead of spaces).
+Browsers should deal with either format, but some other code expects
+dashes.</li>
+<li>Added in <tt class="docutils literal"><span class="pre">sorted</span></tt> function for backward compatibility with Python
+2.3.</li>
+<li>Allow keyword arguments to <a title="webob.Request" class="reference external" href="modules/webob.html#webob.Request"><tt class="xref docutils literal"><span class="pre">webob.Request</span></tt></a>, which assign
+attributes (possibly overwriting values in the environment).</li>
+<li>Added methods <tt class="xref docutils literal"><span class="pre">webob.Request.make_body_seekable()</span></tt> and
+<tt class="xref docutils literal"><span class="pre">webob.Request.copy_body()</span></tt>, which make it easier to share a
+request body among different consuming applications, doing something
+like <cite>req.make_body_seekable(); req.body_file.seek(0)</cite></li>
+</ul>
+</div>
+<div class="section" id="id10">
+<h2><a class="toc-backref" href="#id28">0.9.1</a><a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">request.params.copy()</span></tt> now returns a writable MultiDict (before
+it returned an unwritable object).</li>
+<li>There were several things broken with <tt class="docutils literal"><span class="pre">UnicodeMultiDict</span></tt> when
+<tt class="docutils literal"><span class="pre">decode_param_names</span></tt> is turned on (when the dictionary keys are
+unicode).</li>
+<li>You can pass keyword arguments to <tt class="docutils literal"><span class="pre">Request.blank()</span></tt> that will be
+used to construct <tt class="docutils literal"><span class="pre">Request</span></tt> (e.g., <tt class="docutils literal"><span class="pre">Request.blank('/',</span>
+<span class="pre">decode_param_names=True)</span></tt>).</li>
+<li>If you set headers like <tt class="docutils literal"><span class="pre">response.etag</span></tt> to a unicode value, they
+will be encoded as ISO-8859-1 (however, they will remain encoded,
+and <tt class="docutils literal"><span class="pre">response.etag</span></tt> will not be a unicode value).</li>
+<li>When parsing, interpret times with no timezone as UTC (previously
+they would be interpreted as local time).</li>
+<li>Set the Expires property on cookies when using
+<tt class="docutils literal"><span class="pre">response.set_cookie()</span></tt>.  This is inherited from <tt class="docutils literal"><span class="pre">max_age</span></tt>.</li>
+<li>Support Unicode cookie values</li>
+</ul>
+</div>
+<div class="section" id="id11">
+<h2><a class="toc-backref" href="#id29">0.9</a><a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Added <tt class="docutils literal"><span class="pre">req.urlarg</span></tt>, which represents positional arguments in
+<tt class="docutils literal"><span class="pre">environ['wsgiorg.routing_args']</span></tt>.</li>
+<li>For Python 2.4, added attribute get/set proxies on exception objects
+from, for example, <tt class="docutils literal"><span class="pre">webob.exc.HTTPNotFound().exception</span></tt>, so that
+they act more like normal response objects (despite not being
+new-style classes or <tt class="docutils literal"><span class="pre">webob.Response</span></tt> objects).  In Python 2.5 the
+exceptions are <tt class="docutils literal"><span class="pre">webob.Response</span></tt> objects.</li>
+</ul>
+<div class="section" id="backward-incompatible-changes">
+<h3><a class="toc-backref" href="#id30">Backward Incompatible Changes</a><a class="headerlink" href="#backward-incompatible-changes" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>The <tt class="docutils literal"><span class="pre">Response</span></tt> constructor has changed: it is now <tt class="docutils literal"><span class="pre">Response([body],</span>
+<span class="pre">[status],</span> <span class="pre">...)</span></tt> (before it was <tt class="docutils literal"><span class="pre">Response([status],</span> <span class="pre">[body],</span> <span class="pre">...)</span></tt>).
+Body may be str or unicode.</li>
+<li>The <tt class="docutils literal"><span class="pre">Response</span></tt> class defaults to <tt class="docutils literal"><span class="pre">text/html</span></tt> for the
+Content-Type, and <tt class="docutils literal"><span class="pre">utf8</span></tt> for the charset (charset is only set on
+<tt class="docutils literal"><span class="pre">text/*</span></tt> and <tt class="docutils literal"><span class="pre">application/*+xml</span></tt> responses).</li>
+</ul>
+</div>
+<div class="section" id="bugfixes-and-small-changes">
+<h3><a class="toc-backref" href="#id31">Bugfixes and Small Changes</a><a class="headerlink" href="#bugfixes-and-small-changes" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Use <tt class="docutils literal"><span class="pre">BaseCookie</span></tt> instead of <tt class="docutils literal"><span class="pre">SimpleCookie</span></tt> for parsing cookies.</li>
+<li>Added <tt class="docutils literal"><span class="pre">resp.write(text)</span></tt> method, which is equivalent to
+<tt class="docutils literal"><span class="pre">resp.body</span> <span class="pre">+=</span> <span class="pre">text</span></tt> or <tt class="docutils literal"><span class="pre">resp.unicode_body</span> <span class="pre">+=</span> <span class="pre">text</span></tt>, depending on
+the type of <tt class="docutils literal"><span class="pre">text</span></tt>.</li>
+<li>The <tt class="docutils literal"><span class="pre">decode_param_names</span></tt> argument (used like
+<tt class="docutils literal"><span class="pre">Request(decode_param_names=True)</span></tt>) was being ignored.</li>
+<li>Unicode decoding of file uploads and file upload filenames were
+causing errors when decoding non-file-upload fields (both fixes from
+Ryan Barrett).</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id12">
+<h2><a class="toc-backref" href="#id32">0.8.5</a><a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Added response methods <tt class="docutils literal"><span class="pre">resp.encode_content()</span></tt> and
+<tt class="docutils literal"><span class="pre">resp.decode_content()</span></tt> to gzip or ungzip content.</li>
+<li><tt class="docutils literal"><span class="pre">Response(status=404)</span></tt> now works (before you would have to use
+<tt class="docutils literal"><span class="pre">status=&quot;404</span> <span class="pre">Not</span> <span class="pre">Found&quot;</span></tt>).</li>
+<li>Bugfix (typo) with reusing POST body.</li>
+<li>Added <tt class="docutils literal"><span class="pre">226</span> <span class="pre">IM</span> <span class="pre">Used</span></tt> response status.</li>
+<li>Backport of <tt class="docutils literal"><span class="pre">string.Template</span></tt> included for Python 2.3
+compatibility.</li>
+</ul>
+</div>
+<div class="section" id="id13">
+<h2><a class="toc-backref" href="#id33">0.8.4</a><a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">__setattr__</span></tt> would keep <tt class="docutils literal"><span class="pre">Request</span></tt> subclasses from having
+properly settable environ proxies (like <tt class="docutils literal"><span class="pre">req.path_info</span></tt>).</li>
+</ul>
+</div>
+<div class="section" id="id14">
+<h2><a class="toc-backref" href="#id34">0.8.3</a><a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">request.POST</span></tt> was giving FieldStorage objects for <em>every</em>
+attribute, not just file uploads.  This is fixed now.</li>
+<li>Added request attributes <tt class="docutils literal"><span class="pre">req.server_name</span></tt> and <tt class="docutils literal"><span class="pre">req.server_port</span></tt>
+for the environ keys <tt class="docutils literal"><span class="pre">SERVER_NAME</span></tt> and <tt class="docutils literal"><span class="pre">SERVER_PORT</span></tt>.</li>
+<li>Avoid exceptions in <tt class="docutils literal"><span class="pre">req.content_length</span></tt>, even if
+<tt class="docutils literal"><span class="pre">environ['CONTENT_LENGTH']</span></tt> is somehow invalid.</li>
+</ul>
+</div>
+<div class="section" id="id15">
+<h2><a class="toc-backref" href="#id35">0.8.2</a><a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Python 2.3 compatibility: backport of <tt class="docutils literal"><span class="pre">reversed(seq)</span></tt></li>
+<li>Made separate <tt class="docutils literal"><span class="pre">.exception</span></tt> attribute on <tt class="docutils literal"><span class="pre">webob.exc</span></tt> objects,
+since new-style classes can&#8217;t be raised as exceptions.</li>
+<li>Deprecate <tt class="docutils literal"><span class="pre">req.postvars</span></tt> and <tt class="docutils literal"><span class="pre">req.queryvars</span></tt>, instead using the
+sole names <tt class="docutils literal"><span class="pre">req.GET</span></tt> and <tt class="docutils literal"><span class="pre">req.POST</span></tt> (also <tt class="docutils literal"><span class="pre">req.str_GET</span></tt> and
+<tt class="docutils literal"><span class="pre">req.str_POST</span></tt>).  The old names give a warning; will give an error
+in next release, and be completely gone in the following release.</li>
+<li><tt class="docutils literal"><span class="pre">req.user_agent</span></tt> is now just a simple string (parsing the
+User-Agent header was just too volatile, and required too much
+knowledge about current browsers).  Similarly,
+<tt class="docutils literal"><span class="pre">req.referer_search_query()</span></tt> is gone.</li>
+<li>Added parameters <tt class="docutils literal"><span class="pre">version</span></tt> and <tt class="docutils literal"><span class="pre">comment</span></tt> to
+<tt class="docutils literal"><span class="pre">Response.set_cookie()</span></tt>, per William Dode&#8217;s suggestion.</li>
+<li>Was accidentally consuming file uploads, instead of putting the
+<tt class="docutils literal"><span class="pre">FieldStorage</span></tt> object directly in the parameters.</li>
+</ul>
+</div>
+<div class="section" id="id16">
+<h2><a class="toc-backref" href="#id36">0.8.1</a><a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Added <tt class="docutils literal"><span class="pre">res.set_cookie(...,</span> <span class="pre">httponly=True)</span></tt> to set the <tt class="docutils literal"><span class="pre">HttpOnly</span></tt>
+attribute on the cookie, which keeps Javascript from reading the
+cookie.</li>
+<li>Added some WebDAV-related responses to <tt class="docutils literal"><span class="pre">webob.exc</span></tt></li>
+<li>Set default <tt class="docutils literal"><span class="pre">Last-Modified</span></tt> when using <tt class="docutils literal"><span class="pre">response.cache_expire()</span></tt>
+(fixes issue with Opera)</li>
+<li>Generally fix <tt class="docutils literal"><span class="pre">.cache_control</span></tt></li>
+</ul>
+</div>
+<div class="section" id="id17">
+<h2><a class="toc-backref" href="#id37">0.8</a><a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h2>
+<p>First release.  Nothing is new, or everything is new, depending on how
+you think about it.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">News</a><ul>
+<li><a class="reference external" href="#id1">0.9.8</a></li>
+<li><a class="reference external" href="#id2">0.9.7.1</a></li>
+<li><a class="reference external" href="#id3">0.9.7</a></li>
+<li><a class="reference external" href="#id4">0.9.6.1</a></li>
+<li><a class="reference external" href="#id5">0.9.6</a></li>
+<li><a class="reference external" href="#id6">0.9.5</a></li>
+<li><a class="reference external" href="#id7">0.9.4</a></li>
+<li><a class="reference external" href="#id8">0.9.3</a></li>
+<li><a class="reference external" href="#id9">0.9.2</a></li>
+<li><a class="reference external" href="#id10">0.9.1</a></li>
+<li><a class="reference external" href="#id11">0.9</a><ul>
+<li><a class="reference external" href="#backward-incompatible-changes">Backward Incompatible Changes</a></li>
+<li><a class="reference external" href="#bugfixes-and-small-changes">Bugfixes and Small Changes</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#id12">0.8.5</a></li>
+<li><a class="reference external" href="#id13">0.8.4</a></li>
+<li><a class="reference external" href="#id14">0.8.3</a></li>
+<li><a class="reference external" href="#id15">0.8.2</a></li>
+<li><a class="reference external" href="#id16">0.8.1</a></li>
+<li><a class="reference external" href="#id17">0.8</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="do-it-yourself.html"
+                                  title="previous chapter">Another Do-It-Yourself Framework</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="license.html"
+                                  title="next chapter">License</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/news.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="license.html" title="License"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="do-it-yourself.html" title="Another Do-It-Yourself Framework"
+             >previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2008, Ian Bicking.
+      Last updated on Feb 03, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

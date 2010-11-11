@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>webob.dec – WSGIfy decorator &mdash; WebOb v0.9.8 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.9.8',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="WebOb v0.9.8 documentation" href="../index.html" />
+    <link rel="next" title="Differences Between WebOb and Other Systems" href="../differences.html" />
+    <link rel="prev" title="webob – Request/Response objects" href="webob.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="../differences.html" title="Differences Between WebOb and Other Systems"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="webob.html" title="webob – Request/Response objects"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-webob.dec">
+<h1><tt class="xref docutils literal"><span class="pre">webob.dec</span></tt> &#8211; WSGIfy decorator<a class="headerlink" href="#module-webob.dec" title="Permalink to this headline">¶</a></h1>
+<p>Decorators to wrap functions to make them WSGI applications.</p>
+<p>The main decorator <a title="webob.dec.wsgify" class="reference internal" href="#webob.dec.wsgify"><tt class="xref docutils literal"><span class="pre">wsgify</span></tt></a> turns a function into a WSGI
+application (while also allowing normal calling of the method with an
+instantiated request).</p>
+<div class="section" id="decorator">
+<h2>Decorator<a class="headerlink" href="#decorator" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="webob.dec.wsgify">
+<em class="property">class </em><tt class="descclassname">webob.dec.</tt><tt class="descname">wsgify</tt><big>(</big><em>func=None</em>, <em>RequestClass=None</em>, <em>args=()</em>, <em>kwargs=None</em>, <em>middleware_wraps=None</em><big>)</big><a class="headerlink" href="#webob.dec.wsgify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turns a request-taking, response-returning function into a WSGI
+app</p>
+<p>You can use this like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@wsgify</span>
+<span class="k">def</span> <span class="nf">myfunc</span><span class="p">(</span><span class="n">req</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">webob</span><span class="o">.</span><span class="n">Response</span><span class="p">(</span><span class="s">&#39;hey there&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>With that <tt class="docutils literal"><span class="pre">myfunc</span></tt> will be a WSGI application, callable like
+<tt class="docutils literal"><span class="pre">app_iter</span> <span class="pre">=</span> <span class="pre">myfunc(environ,</span> <span class="pre">start_response)</span></tt>.  You can also call
+it like normal, e.g., <tt class="docutils literal"><span class="pre">resp</span> <span class="pre">=</span> <span class="pre">myfunc(req)</span></tt>.  (You can also wrap
+methods, like <tt class="docutils literal"><span class="pre">def</span> <span class="pre">myfunc(self,</span> <span class="pre">req)</span></tt>.)</p>
+<p>If you raise exceptions from <tt class="xref docutils literal"><span class="pre">webob.exc</span></tt> they will be turned
+into WSGI responses.</p>
+<p>There are also several parameters you can use to customize the
+decorator.  Most notably, you can use a <a title="webob.Request" class="reference external" href="webob.html#webob.Request"><tt class="xref docutils literal"><span class="pre">webob.Request</span></tt></a>
+subclass, like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyRequest</span><span class="p">(</span><span class="n">webob</span><span class="o">.</span><span class="n">Request</span><span class="p">):</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_local</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">remote_addr</span> <span class="o">==</span> <span class="s">&#39;127.0.0.1&#39;</span>
+<span class="nd">@wsgify</span><span class="p">(</span><span class="n">RequestClass</span><span class="o">=</span><span class="n">MyRequest</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">myfunc</span><span class="p">(</span><span class="n">req</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">req</span><span class="o">.</span><span class="n">is_local</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="s">&#39;hi!&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">webob</span><span class="o">.</span><span class="n">exc</span><span class="o">.</span><span class="n">HTTPForbidden</span>
+</pre></div>
+</div>
+<p>Another customization you can add is to add <cite>args</cite> (positional
+arguments) or <cite>kwargs</cite> (of course, keyword arguments).  While
+generally not that useful, you can use this to create multiple
+WSGI apps from one function, like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">simplejson</span>
+<span class="k">def</span> <span class="nf">serve_json</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">json_obj</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">json_obj</span><span class="p">),</span>
+                    <span class="n">content_type</span><span class="o">=</span><span class="s">&#39;application/json&#39;</span><span class="p">)</span>
+
+<span class="n">serve_ob1</span> <span class="o">=</span> <span class="n">wsgify</span><span class="p">(</span><span class="n">serve_json</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">ob1</span><span class="p">,))</span>
+<span class="n">serve_ob2</span> <span class="o">=</span> <span class="n">wsgify</span><span class="p">(</span><span class="n">serve_json</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">ob2</span><span class="p">,))</span>
+</pre></div>
+</div>
+<p>You can return several things from a function:</p>
+<ul class="simple">
+<li>A <a title="webob.Response" class="reference external" href="webob.html#webob.Response"><tt class="xref docutils literal"><span class="pre">webob.Response</span></tt></a> object (or subclass)</li>
+<li><em>Any</em> WSGI application</li>
+<li>None, and then <tt class="docutils literal"><span class="pre">req.response</span></tt> will be used (a pre-instantiated
+Response object)</li>
+<li>A string, which will be written to <tt class="docutils literal"><span class="pre">req.response</span></tt> and then that
+response will be used.</li>
+<li>Raise an exception from <tt class="xref docutils literal"><span class="pre">webob.exc</span></tt></li>
+</ul>
+<p>Also see <tt class="xref docutils literal"><span class="pre">wsgify.middleware()</span></tt> for a way to make middleware.</p>
+<p>You can also subclass this decorator; the most useful things to do
+in a subclass would be to change <cite>RequestClass</cite> or override
+<cite>call_func</cite> (e.g., to add <tt class="docutils literal"><span class="pre">req.urlvars</span></tt> as keyword arguments to
+the function).</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href=""><tt class="docutils literal"><span class="pre">webob.dec</span></tt> &#8211; WSGIfy decorator</a><ul>
+<li><a class="reference external" href="#decorator">Decorator</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="webob.html"
+                                  title="previous chapter"><tt class="docutils literal"><span class="pre">webob</span></tt> &#8211; Request/Response objects</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="../differences.html"
+                                  title="next chapter">Differences Between WebOb and Other Systems</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/dec.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../differences.html" title="Differences Between WebOb and Other Systems"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="webob.html" title="webob – Request/Response objects"
+             >previous</a> |</li>
+        <li><a href="../index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2008, Ian Bicking.
+      Last updated on Feb 03, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

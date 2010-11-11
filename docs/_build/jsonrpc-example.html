@@ -1,0 +1,725 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>JSON-RPC Example &mdash; WebOb v0.9.8 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.9.8',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="WebOb v0.9.8 documentation" href="index.html" />
+    <link rel="next" title="Another Do-It-Yourself Framework" href="do-it-yourself.html" />
+    <link rel="prev" title="Comment Example" href="comment-example.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="do-it-yourself.html" title="Another Do-It-Yourself Framework"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="comment-example.html" title="Comment Example"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="json-rpc-example">
+<h1><a class="toc-backref" href="#id1">JSON-RPC Example</a><a class="headerlink" href="#json-rpc-example" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#json-rpc-example" id="id1">JSON-RPC Example</a><ul>
+<li><a class="reference internal" href="#introduction" id="id2">Introduction</a></li>
+<li><a class="reference internal" href="#code" id="id3">Code</a></li>
+<li><a class="reference internal" href="#concepts" id="id4">Concepts</a></li>
+<li><a class="reference internal" href="#infrastructure" id="id5">Infrastructure</a></li>
+<li><a class="reference internal" href="#the-application-wrapper" id="id6">The Application Wrapper</a></li>
+<li><a class="reference internal" href="#the-process-method" id="id7">The <tt class="docutils literal"><span class="pre">process</span></tt> method</a></li>
+<li><a class="reference internal" href="#the-complete-code" id="id8">The Complete Code</a></li>
+<li><a class="reference internal" href="#the-client" id="id9">The Client</a></li>
+<li><a class="reference internal" href="#the-proxy-client" id="id10">The Proxy Client</a></li>
+<li><a class="reference internal" href="#using-them-together" id="id11">Using Them Together</a></li>
+<li><a class="reference internal" href="#conclusion" id="id12">Conclusion</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">author:</th><td class="field-body">Ian Bicking</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="introduction">
+<h2><a class="toc-backref" href="#id2">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This is an example of how to write a web service using WebOb.  The
+example shows how to create a <a class="reference external" href="http://json-rpc.org/">JSON-RPC</a>
+endpoint using WebOb and the <a class="reference external" href="http://www.undefined.org/python/#simplejson">simplejson</a> JSON library.  This
+also shows how to use WebOb as a client library using <a class="reference external" href="http://pythonpaste.org/wsgiproxy/">WSGIProxy</a>.</p>
+<p>While this example presents JSON-RPC, this is not an endorsement of
+JSON-RPC.  In fact I don&#8217;t like JSON-RPC.  It&#8217;s unnecessarily
+un-RESTful, and modelled too closely on <a class="reference external" href="http://www.xmlrpc.com/">XML-RPC</a>.</p>
+</div>
+<div class="section" id="code">
+<h2><a class="toc-backref" href="#id3">Code</a><a class="headerlink" href="#code" title="Permalink to this headline">¶</a></h2>
+<p>The finished code for this is available in
+<a class="reference external" href="http://bitbucket.org/ianb/webob/src/tip/trunk/docs/json-example-code/jsonrpc.py">docs/json-example-code/jsonrpc.py</a>
+&#8211; you can run that file as a script to try it out, or import it.</p>
+</div>
+<div class="section" id="concepts">
+<h2><a class="toc-backref" href="#id4">Concepts</a><a class="headerlink" href="#concepts" title="Permalink to this headline">¶</a></h2>
+<p>JSON-RPC wraps an object, allowing you to call methods on that object
+and get the return values.  It also provides a way to get error
+responses.</p>
+<p>The <a class="reference external" href="http://json-rpc.org/wd/JSON-RPC-1-1-WD-20060807.html">specification</a> goes into the
+details (though in a vague sort of way).  Here&#8217;s the basics:</p>
+<ul>
+<li><p class="first">All access goes through a POST to a single URL.</p>
+</li>
+<li><p class="first">The POST contains a JSON body that looks like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="s">&quot;method&quot;</span><span class="p">:</span> <span class="s">&quot;methodName&quot;</span><span class="p">,</span>
+ <span class="s">&quot;id&quot;</span><span class="p">:</span> <span class="s">&quot;arbitrary-something&quot;</span><span class="p">,</span>
+ <span class="s">&quot;params&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">,</span> <span class="o">...</span><span class="p">]}</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">The <tt class="docutils literal"><span class="pre">id</span></tt> parameter is just a convenience for the client to keep
+track of which response goes with which request.  This makes
+asynchronous calls (like an XMLHttpRequest) easier.  We just send
+the exact same id back as we get, we never look at it.</p>
+</li>
+<li><p class="first">The response is JSON.  A successful response looks like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span><span class="s">&quot;result&quot;</span><span class="p">:</span> <span class="n">the_result</span><span class="p">,</span>
+ <span class="s">&quot;error&quot;</span><span class="p">:</span> <span class="n">null</span><span class="p">,</span>
+ <span class="s">&quot;id&quot;</span><span class="p">:</span> <span class="s">&quot;arbitrary-something&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">The error response looks like:</p>
+<div class="highlight-python"><pre>{"result": null,
+ "error": {"name": "JSONRPCError",
+           "code": (number 100-999),
+           "message": "Some Error Occurred",
+           "error": "whatever you want\n(a traceback?)"},
+ "id": "arbitrary-something"}</pre>
+</div>
+</li>
+<li><p class="first">It doesn&#8217;t seem to indicate if an error response should have a 200
+response or a 500 response.  So as not to be completely stupid about
+HTTP, we choose a 500 resonse, as giving an error with a 200
+response is irresponsible.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="infrastructure">
+<h2><a class="toc-backref" href="#id5">Infrastructure</a><a class="headerlink" href="#infrastructure" title="Permalink to this headline">¶</a></h2>
+<p>To make this easier to test, we&#8217;ll set up a bit of infrastructure.
+This will open up a server (using <a class="reference external" href="http://python.org/doc/current/lib/module-wsgiref.simpleserver.html">wsgiref</a>)
+and serve up our application (note that <em>creating</em> the application is
+left out to start with):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">optparse</span>
+    <span class="kn">from</span> <span class="nn">wsgiref</span> <span class="kn">import</span> <span class="n">simple_server</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">optparse</span><span class="o">.</span><span class="n">OptionParser</span><span class="p">(</span>
+        <span class="n">usage</span><span class="o">=</span><span class="s">&quot;%prog [OPTIONS] MODULE:EXPRESSION&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&#39;-p&#39;</span><span class="p">,</span> <span class="s">&#39;--port&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">&#39;8080&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&#39;Port to serve on (default 8080)&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_option</span><span class="p">(</span>
+        <span class="s">&#39;-H&#39;</span><span class="p">,</span> <span class="s">&#39;--host&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&#39;Host to serve on (default localhost; 0.0.0.0 to make public)&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mf">1</span><span class="p">:]</span>
+    <span class="n">options</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&#39;You must give a single object reference&#39;</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mf">2</span><span class="p">)</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">make_app</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mf">0</span><span class="p">])</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">simple_server</span><span class="o">.</span><span class="n">make_server</span><span class="p">(</span>
+        <span class="n">options</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">port</span><span class="p">),</span>
+        <span class="n">app</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&#39;Serving on http://</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>I won&#8217;t describe this much.  It starts a server, serving up just the
+app created by <tt class="docutils literal"><span class="pre">make_app(args[0])</span></tt>.  <tt class="docutils literal"><span class="pre">make_app</span></tt> will have to load
+up the object and wrap it in our WSGI/WebOb wrapper.  We&#8217;ll be calling
+that wrapper <tt class="docutils literal"><span class="pre">JSONRPC(obj)</span></tt>, so here&#8217;s how it&#8217;ll go:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">make_app</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
+    <span class="n">module</span><span class="p">,</span> <span class="n">expression</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">,</span> <span class="mf">1</span><span class="p">)</span>
+    <span class="nb">__import__</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">module</span><span class="p">]</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span> <span class="n">module</span><span class="o">.</span><span class="n">__dict__</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">JsonRpcApp</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We use <tt class="docutils literal"><span class="pre">__import__(module)</span></tt> to import the module, but its return
+value is wonky.  We can find the thing it imported in <tt class="docutils literal"><span class="pre">sys.modules</span></tt>
+(a dictionary of all the loaded modules).  Then we evaluate the second
+part of the expression in the namespace of the module.  This lets you
+do something like <tt class="docutils literal"><span class="pre">smtplib:SMTP('localhost')</span></tt> to get a fully
+instantiated SMTP object.</p>
+<p>That&#8217;s all the infrastructure we&#8217;ll need for the server side.  Now we
+just have to implement <tt class="docutils literal"><span class="pre">JsonRpcApp</span></tt>.</p>
+</div>
+<div class="section" id="the-application-wrapper">
+<h2><a class="toc-backref" href="#id6">The Application Wrapper</a><a class="headerlink" href="#the-application-wrapper" title="Permalink to this headline">¶</a></h2>
+<p>Note that I&#8217;m calling this an &#8220;application&#8221; because that&#8217;s the
+terminology WSGI uses.  Everything that gets <em>called</em> is an
+&#8220;application&#8221;, and anything that calls an application is called a
+&#8220;server&#8221;.</p>
+<p>The instantiation of the server is already figured out:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">JsonRpcApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="o">...</span> <span class="n">the</span> <span class="n">WSGI</span> <span class="n">interface</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>So the server is an instance bound to the particular object being
+exposed, and <tt class="docutils literal"><span class="pre">__call__</span></tt> implements the WSGI interface.</p>
+<p>We&#8217;ll start with a simple outline of the WSGI interface, using a kind
+of standard WebOb setup:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">Request</span><span class="p">,</span> <span class="n">Response</span>
+<span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">exc</span>
+
+<span class="k">class</span> <span class="nc">JsonRpcApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPBadRequest</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPException</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">e</span>
+        <span class="k">return</span> <span class="n">resp</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We first create a request object.  The request object just wraps the
+WSGI environment.  Then we create the response object in the
+<tt class="docutils literal"><span class="pre">process</span></tt> method (which we still have to write).  We also do some
+exception catching.  We&#8217;ll turn any <tt class="docutils literal"><span class="pre">ValueError</span></tt> into a <tt class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span>
+<span class="pre">Request</span></tt> response.  We&#8217;ll also let <tt class="docutils literal"><span class="pre">process</span></tt> raise any
+<tt class="docutils literal"><span class="pre">web.exc.HTTPException</span></tt> exception.  There&#8217;s an exception defined in
+that module for all the HTTP error responses, like <tt class="docutils literal"><span class="pre">405</span> <span class="pre">Method</span> <span class="pre">Not</span>
+<span class="pre">Allowed</span></tt>.  These exceptions are themselves WSGI applications (as is
+<tt class="docutils literal"><span class="pre">webob.Response</span></tt>), and so we call them like WSGI applications and
+return the result.</p>
+</div>
+<div class="section" id="the-process-method">
+<h2><a class="toc-backref" href="#id7">The <tt class="docutils literal"><span class="pre">process</span></tt> method</a><a class="headerlink" href="#the-process-method" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">process</span></tt> method of course is where all the fancy stuff
+happens.  We&#8217;ll start with just the most minimal implementation, with
+no error checking or handling:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">simplejson</span> <span class="kn">import</span> <span class="n">loads</span><span class="p">,</span> <span class="n">dumps</span>
+
+<span class="k">class</span> <span class="nc">JsonRpcApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">):</span>
+        <span class="n">json</span> <span class="o">=</span> <span class="n">loads</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="n">json</span><span class="p">[</span><span class="s">&#39;method&#39;</span><span class="p">]</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">json</span><span class="p">[</span><span class="s">&#39;params&#39;</span><span class="p">]</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="n">json</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">Response</span><span class="p">(</span>
+            <span class="n">content_type</span><span class="o">=</span><span class="s">&#39;application/json&#39;</span><span class="p">,</span>
+            <span class="n">body</span><span class="o">=</span><span class="n">dumps</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span>
+                            <span class="n">error</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                            <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">resp</span>
+</pre></div>
+</div>
+<p>As long as the request is properly formed and the method doesn&#8217;t raise
+any exceptions, you are pretty much set.  But of course that&#8217;s not a
+reasonable expectation.  There&#8217;s a whole bunch of things that can go
+wrong.  For instance, it has to be a POST method:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="ow">not</span> <span class="n">req</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">&#39;POST&#39;</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPMethodNotAllowed</span><span class="p">(</span>
+        <span class="s">&quot;Only POST allowed&quot;</span><span class="p">,</span>
+        <span class="n">allowed</span><span class="o">=</span><span class="s">&#39;POST&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">exception</span>
+</pre></div>
+</div>
+<p>And maybe the request body doesn&#8217;t contain valid JSON:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">try</span><span class="p">:</span>
+    <span class="n">json</span> <span class="o">=</span> <span class="n">loads</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Bad JSON: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And maybe all the keys aren&#8217;t in the dictionary:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">try</span><span class="p">:</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">json</span><span class="p">[</span><span class="s">&#39;method&#39;</span><span class="p">]</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">json</span><span class="p">[</span><span class="s">&#39;params&#39;</span><span class="p">]</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">json</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span>
+<span class="k">except</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="s">&quot;JSON body missing parameter: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And maybe it&#8217;s trying to acces a private method (a method that starts
+with <tt class="docutils literal"><span class="pre">_</span></tt>) &#8211; that&#8217;s not just a bad request, we&#8217;ll call that case
+<tt class="docutils literal"><span class="pre">403</span> <span class="pre">Forbidden</span></tt>.  Note that when we raise an exception in Python 2.4
+we have to raise its <tt class="docutils literal"><span class="pre">.exception</span></tt> attribute, which contains the
+&#8220;real&#8221; exception object (as opposed to the <tt class="docutils literal"><span class="pre">web.Response</span></tt> based
+object): (In Python 2.5+ this isn&#8217;t an issue)</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPForbidden</span><span class="p">(</span>
+        <span class="s">&quot;Bad method name </span><span class="si">%s</span><span class="s">: must not start with _&quot;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">exception</span>
+</pre></div>
+</div>
+<p>And maybe <tt class="docutils literal"><span class="pre">json['params']</span></tt> isn&#8217;t a list:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="s">&quot;Bad params </span><span class="si">%r</span><span class="s">: must be a list&quot;</span> <span class="o">%</span> <span class="n">params</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And maybe the method doesn&#8217;t exist:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">try</span><span class="p">:</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="s">&quot;No such method </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The last case is the error we actually can expect: that the method
+raises some exception.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">try</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">tb</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+    <span class="n">exc_value</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mf">1</span><span class="p">]</span>
+    <span class="n">error_value</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s">&#39;JSONRPCError&#39;</span><span class="p">,</span>
+        <span class="n">code</span><span class="o">=</span><span class="mf">100</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc_value</span><span class="p">),</span>
+        <span class="n">error</span><span class="o">=</span><span class="n">tb</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span>
+        <span class="n">status</span><span class="o">=</span><span class="mf">500</span><span class="p">,</span>
+        <span class="n">content_type</span><span class="o">=</span><span class="s">&#39;application/json&#39;</span><span class="p">,</span>
+        <span class="n">body</span><span class="o">=</span><span class="n">dumps</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                        <span class="n">error</span><span class="o">=</span><span class="n">error_value</span><span class="p">,</span>
+                        <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>That&#8217;s a complete server.</p>
+</div>
+<div class="section" id="the-complete-code">
+<h2><a class="toc-backref" href="#id8">The Complete Code</a><a class="headerlink" href="#the-complete-code" title="Permalink to this headline">¶</a></h2>
+<p>Since we showed all the error handling in pieces, here&#8217;s the complete
+code:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">Request</span><span class="p">,</span> <span class="n">Response</span>
+<span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">exc</span>
+<span class="kn">from</span> <span class="nn">simplejson</span> <span class="kn">import</span> <span class="n">loads</span><span class="p">,</span> <span class="n">dumps</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="k">class</span> <span class="nc">JsonRpcApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Serve the given object via json-rpc (http://json-rpc.org/)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPBadRequest</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPException</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">e</span>
+        <span class="k">return</span> <span class="n">resp</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">req</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">&#39;POST&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPMethodNotAllowed</span><span class="p">(</span>
+                <span class="s">&quot;Only POST allowed&quot;</span><span class="p">,</span>
+                <span class="n">allowed</span><span class="o">=</span><span class="s">&#39;POST&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">exception</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">json</span> <span class="o">=</span> <span class="n">loads</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Bad JSON: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="n">json</span><span class="p">[</span><span class="s">&#39;method&#39;</span><span class="p">]</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">json</span><span class="p">[</span><span class="s">&#39;params&#39;</span><span class="p">]</span>
+            <span class="nb">id</span> <span class="o">=</span> <span class="n">json</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s">&quot;JSON body missing parameter: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">exc</span><span class="o">.</span><span class="n">HTTPForbidden</span><span class="p">(</span>
+                <span class="s">&quot;Bad method name </span><span class="si">%s</span><span class="s">: must not start with _&quot;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">exception</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s">&quot;Bad params </span><span class="si">%r</span><span class="s">: must be a list&quot;</span> <span class="o">%</span> <span class="n">params</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s">&quot;No such method </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+            <span class="n">exc_value</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mf">1</span><span class="p">]</span>
+            <span class="n">error_value</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s">&#39;JSONRPCError&#39;</span><span class="p">,</span>
+                <span class="n">code</span><span class="o">=</span><span class="mf">100</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc_value</span><span class="p">),</span>
+                <span class="n">error</span><span class="o">=</span><span class="n">text</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">Response</span><span class="p">(</span>
+                <span class="n">status</span><span class="o">=</span><span class="mf">500</span><span class="p">,</span>
+                <span class="n">content_type</span><span class="o">=</span><span class="s">&#39;application/json&#39;</span><span class="p">,</span>
+                <span class="n">body</span><span class="o">=</span><span class="n">dumps</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                                <span class="n">error</span><span class="o">=</span><span class="n">error_value</span><span class="p">,</span>
+                                <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span>
+            <span class="n">content_type</span><span class="o">=</span><span class="s">&#39;application/json&#39;</span><span class="p">,</span>
+            <span class="n">body</span><span class="o">=</span><span class="n">dumps</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span>
+                            <span class="n">error</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                            <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-client">
+<h2><a class="toc-backref" href="#id9">The Client</a><a class="headerlink" href="#the-client" title="Permalink to this headline">¶</a></h2>
+<p>It would be nice to have a client to test out our server.  Using
+<a class="reference external" href="http://pythonpaste.org/wsgiproxy/">WSGIProxy</a> we can use WebOb
+Request and Response to do actual HTTP connections.</p>
+<p>The basic idea is that you can create a blank Request:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">Request</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;http://python.org&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then you can send that request to an application:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">wsgiproxy.exactproxy</span> <span class="kn">import</span> <span class="n">proxy_exact_request</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">resp</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">proxy_exact_request</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This particular application (<tt class="docutils literal"><span class="pre">proxy_exact_request</span></tt>) sends the
+request over HTTP:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">resp</span><span class="o">.</span><span class="n">content_type</span>
+<span class="go">&#39;text/html&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">resp</span><span class="o">.</span><span class="n">body</span><span class="p">[:</span><span class="mf">10</span><span class="p">]</span>
+<span class="go">&#39;&lt;!DOCTYPE &#39;</span>
+</pre></div>
+</div>
+<p>So we&#8217;re going to create a proxy object that constructs WebOb-based
+jsonrpc requests, and sends those using <tt class="docutils literal"><span class="pre">proxy_exact_request</span></tt>.</p>
+</div>
+<div class="section" id="the-proxy-client">
+<h2><a class="toc-backref" href="#id10">The Proxy Client</a><a class="headerlink" href="#the-proxy-client" title="Permalink to this headline">¶</a></h2>
+<p>The proxy client is instantiated with its base URL.  We&#8217;ll also let
+you pass in a proxy application, in case you want to do local requests
+(e.g., to do direct tests against a <tt class="docutils literal"><span class="pre">JsonRpcApp</span></tt> instance):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ServerProxy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">proxy</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_url</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="k">if</span> <span class="n">proxy</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">wsgiproxy.exactproxy</span> <span class="kn">import</span> <span class="n">proxy_exact_request</span>
+            <span class="n">proxy</span> <span class="o">=</span> <span class="n">proxy_exact_request</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proxy</span> <span class="o">=</span> <span class="n">proxy</span>
+</pre></div>
+</div>
+<p>This ServerProxy object itself doesn&#8217;t do much, but you can call methods on
+it.  We can intercept any access <tt class="docutils literal"><span class="pre">ServerProxy(...).method</span></tt> with the
+magic function <tt class="docutils literal"><span class="pre">__getattr__</span></tt>.  Whenever you get an attribute that
+doesn&#8217;t exist in an instance, Python will call
+<tt class="docutils literal"><span class="pre">inst.__getattr__(attr_name)</span></tt> and return that.  When you <em>call</em> a
+method, you are calling the object that <tt class="docutils literal"><span class="pre">.method</span></tt> returns.  So we&#8217;ll
+create a helper object that is callable, and our <tt class="docutils literal"><span class="pre">__getattr__</span></tt> will
+just return that:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ServerProxy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="c"># Note, even attributes like __contains__ can get routed</span>
+        <span class="c"># through __getattr__</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_Method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">_Method</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+</pre></div>
+</div>
+<p>Now when we call the method we&#8217;ll be calling <tt class="docutils literal"><span class="pre">_Method.__call__</span></tt>, and
+the HTTP endpoint will be <tt class="docutils literal"><span class="pre">self.parent._url</span></tt>, and the method name
+will be <tt class="docutils literal"><span class="pre">self.name</span></tt>.</p>
+<p>Here&#8217;s the code to do the call:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">_Method</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">json</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="nb">id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                    <span class="n">params</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_url</span><span class="p">)</span>
+        <span class="n">req</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s">&#39;POST&#39;</span>
+        <span class="n">req</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s">&#39;application/json&#39;</span>
+        <span class="n">req</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">dumps</span><span class="p">(</span><span class="n">json</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">proxy</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">status_int</span> <span class="o">!=</span> <span class="mf">200</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="n">resp</span><span class="o">.</span><span class="n">status_int</span> <span class="o">==</span> <span class="mf">500</span>
+            <span class="ow">and</span> <span class="n">resp</span><span class="o">.</span><span class="n">content_type</span> <span class="o">==</span> <span class="s">&#39;application/json&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ProxyError</span><span class="p">(</span>
+                <span class="s">&quot;Error from JSON-RPC client </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span>
+                <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_url</span><span class="p">,</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="p">),</span>
+                <span class="n">resp</span><span class="p">)</span>
+        <span class="n">json</span> <span class="o">=</span> <span class="n">loads</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;error&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">Fault</span><span class="p">(</span>
+                <span class="n">json</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;message&#39;</span><span class="p">),</span>
+                <span class="n">json</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;code&#39;</span><span class="p">),</span>
+                <span class="n">json</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;error&#39;</span><span class="p">),</span>
+                <span class="n">resp</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">e</span>
+        <span class="k">return</span> <span class="n">json</span><span class="p">[</span><span class="s">&#39;result&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>We raise two kinds of exceptions here.  <tt class="docutils literal"><span class="pre">ProxyError</span></tt> is when
+something unexpected happens, like a <tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt>.  <tt class="docutils literal"><span class="pre">Fault</span></tt> is
+when a more expected exception occurs, i.e., the underlying method
+raised an exception.</p>
+<p>In both cases we&#8217;ll keep the response object around, as that can be
+interesting.  Note that you can make exceptions have any methods or
+signature you want, which we&#8217;ll do:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ProxyError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raised when a request via ServerProxy breaks</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">response</span>
+
+<span class="k">class</span> <span class="nc">Fault</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raised when there is a remote error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">code</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="n">response</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;Method error calling </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mf">0</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="using-them-together">
+<h2><a class="toc-backref" href="#id11">Using Them Together</a><a class="headerlink" href="#using-them-together" title="Permalink to this headline">¶</a></h2>
+<p>Good programmers start with tests.  But at least we&#8217;ll end with a
+test.  We&#8217;ll use <a class="reference external" href="http://python.org/doc/current/lib/module-doctest.html">doctest</a> for our
+tests.  The test is in <a class="reference external" href="http://bitbucket.org/ianb/webob/src/tip/docs/json-example-code/test_jsonrpc.txt">docs/json-example-code/test_jsonrpc.txt</a>
+and you can run it with <a class="reference external" href="http://bitbucket.org/ianb/webob/src/tip/docs/json-example-code/test_jsonrpc.py">docs/json-example-code/test_jsonrpc.py</a>,
+which looks like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testfile</span><span class="p">(</span><span class="s">&#39;test_jsonrpc.txt&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As you can see, it&#8217;s just a stub to run the doctest.  We&#8217;ll need a
+simple object to expose.  We&#8217;ll make it real simple:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Divider</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">divide</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="gp">... </span>       <span class="k">return</span> <span class="n">a</span> <span class="o">/</span> <span class="n">b</span>
+</pre></div>
+</div>
+<p>Then we&#8217;ll get the app setup:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">jsonrpc</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">app</span> <span class="o">=</span> <span class="n">JsonRpcApp</span><span class="p">(</span><span class="n">Divider</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>And attach the client <em>directly</em> to it:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">proxy</span> <span class="o">=</span> <span class="n">ServerProxy</span><span class="p">(</span><span class="s">&#39;http://localhost:8080&#39;</span><span class="p">,</span> <span class="n">proxy</span><span class="o">=</span><span class="n">app</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Because we gave the app itself as the proxy, the URL doesn&#8217;t actually
+matter.</p>
+<p>Now, if you are used to testing you might ask: is this kosher?  That
+is, we are shortcircuiting HTTP entirely.  Is this a realistic test?</p>
+<p>One thing you might be worried about in this case is that there are
+more shared objects than you&#8217;d have with HTTP.  That is, everything
+over HTTP is serialized to headers and bodies.  Without HTTP, we can
+send stuff around that can&#8217;t go over HTTP.  This <em>could</em> happen, but
+we&#8217;re mostly protected because the only thing the application&#8217;s share
+is the WSGI <tt class="docutils literal"><span class="pre">environ</span></tt>.  Even though we use a <tt class="docutils literal"><span class="pre">webob.Request</span></tt>
+object on both side, it&#8217;s not the <em>same</em> request object, and all the
+state is studiously kept in the environment.  We <em>could</em> share things
+in the environment that couldn&#8217;t go over HTTP.  For instance, we could
+set <tt class="docutils literal"><span class="pre">environ['jsonrpc.request_value']</span> <span class="pre">=</span> <span class="pre">dict(...)</span></tt>, and avoid
+<tt class="docutils literal"><span class="pre">simplejson.dumps</span></tt> and <tt class="docutils literal"><span class="pre">simplejson.loads</span></tt>.  We <em>could</em> do that,
+and if we did then it is possible our test would work even though the
+libraries were broken over HTTP.  But of course inspection shows we
+<em>don&#8217;t</em> do that.  A little discipline is required to resist playing clever
+tricks (or else you can play those tricks and do more testing).
+Generally it works well.</p>
+<p>So, now we have a proxy, lets use it:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">proxy</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="mf">10</span><span class="p">,</span> <span class="mf">4</span><span class="p">)</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">proxy</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="mf">10</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">)</span>
+<span class="go">2.5</span>
+</pre></div>
+</div>
+<p>Lastly, we&#8217;ll test a couple error conditions.  First a method error:</p>
+<div class="highlight-python"><pre>&gt;&gt;&gt; proxy.divide(10, 0) # doctest: +ELLIPSIS
+Traceback (most recent call last):
+   ...
+Fault: Method error calling http://localhost:8080: integer division or modulo by zero
+Traceback (most recent call last):
+  File ...
+    result = method(*params)
+  File ...
+    return a / b
+ZeroDivisionError: integer division or modulo by zero
+&lt;BLANKLINE&gt;</pre>
+</div>
+<p>It&#8217;s hard to actually predict this exception, because the test of the
+exception itself contains the traceback from the underlying call, with
+filenames and line numbers that aren&#8217;t stable.  We use <tt class="docutils literal"><span class="pre">#</span> <span class="pre">doctest:</span>
+<span class="pre">+ELLIPSIS</span></tt> so that we can replace text we don&#8217;t care about with
+<tt class="docutils literal"><span class="pre">...</span></tt>.  This is actually figured out through copy-and-paste, and
+visual inspection to make sure it looks sensible.</p>
+<p>The other exception can be:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">proxy</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span> <span class="mf">1</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="nc">ProxyError: Error from JSON-RPC client http://localhost:8080</span>: <span class="n-Identifier">400 Bad Request</span>
+</pre></div>
+</div>
+<p>Here the exception isn&#8217;t a JSON-RPC method exception, but a more basic
+ProxyError exception.</p>
+</div>
+<div class="section" id="conclusion">
+<h2><a class="toc-backref" href="#id12">Conclusion</a><a class="headerlink" href="#conclusion" title="Permalink to this headline">¶</a></h2>
+<p>Hopefully this will give you ideas about how to implement web services
+of different kinds using WebOb.  I hope you also can appreciate the
+elegance of the symmetry of the request and response objects, and the
+client and server for the protocol.</p>
+<p>Many of these techniques would be better used with a <a class="reference external" href="http://en.wikipedia.org/wiki/Representational_State_Transfer">RESTful</a>
+service, so do think about that direction if you are implementing your
+own protocol.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">JSON-RPC Example</a><ul>
+<li><a class="reference external" href="#introduction">Introduction</a></li>
+<li><a class="reference external" href="#code">Code</a></li>
+<li><a class="reference external" href="#concepts">Concepts</a></li>
+<li><a class="reference external" href="#infrastructure">Infrastructure</a></li>
+<li><a class="reference external" href="#the-application-wrapper">The Application Wrapper</a></li>
+<li><a class="reference external" href="#the-process-method">The <tt class="docutils literal"><span class="pre">process</span></tt> method</a></li>
+<li><a class="reference external" href="#the-complete-code">The Complete Code</a></li>
+<li><a class="reference external" href="#the-client">The Client</a></li>
+<li><a class="reference external" href="#the-proxy-client">The Proxy Client</a></li>
+<li><a class="reference external" href="#using-them-together">Using Them Together</a></li>
+<li><a class="reference external" href="#conclusion">Conclusion</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="comment-example.html"
+                                  title="previous chapter">Comment Example</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="do-it-yourself.html"
+                                  title="next chapter">Another Do-It-Yourself Framework</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/jsonrpc-example.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="do-it-yourself.html" title="Another Do-It-Yourself Framework"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="comment-example.html" title="Comment Example"
+             >previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2008, Ian Bicking.
+      Last updated on Feb 03, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

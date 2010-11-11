@@ -1,0 +1,592 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>WebOb &mdash; WebOb v0.9.8 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.9.8',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="WebOb v0.9.8 documentation" href="" />
+    <link rel="next" title="WebOb Reference" href="reference.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="reference.html" title="WebOb Reference"
+             accesskey="N">next</a> |</li>
+        <li><a href="">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="webob">
+<h1><a class="toc-backref" href="#id1">WebOb</a><a class="headerlink" href="#webob" title="Permalink to this headline">¶</a></h1>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="reference.html">WebOb Reference</a><ul>
+<li class="toctree-l2"><a class="reference external" href="reference.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference external" href="reference.html#id1">Request</a><ul>
+<li class="toctree-l3"><a class="reference external" href="reference.html#request-body">Request Body</a></li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#method-url">Method &amp; URL</a></li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#headers">Headers</a></li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#query-post-variables">Query &amp; POST variables</a><ul>
+<li class="toctree-l4"><a class="reference external" href="reference.html#unicode-variables">Unicode Variables</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#cookies">Cookies</a></li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#modifying-the-request">Modifying the request</a></li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#header-getters">Header Getters</a><ul>
+<li class="toctree-l4"><a class="reference external" href="reference.html#accept-headers">Accept-* headers</a></li>
+<li class="toctree-l4"><a class="reference external" href="reference.html#conditional-requests">Conditional Requests</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#calling-wsgi-applications">Calling WSGI Applications</a></li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#ad-hoc-attributes">Ad-Hoc Attributes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference external" href="reference.html#id2">Response</a><ul>
+<li class="toctree-l3"><a class="reference external" href="reference.html#core-attributes">Core Attributes</a></li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#id3">Headers</a></li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#body-app-iter">Body &amp; app_iter</a></li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#id4">Header Getters</a></li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#id5">Cookies</a></li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#binding-a-request">Binding a Request</a></li>
+<li class="toctree-l3"><a class="reference external" href="reference.html#response-as-a-wsgi-application">Response as a WSGI application</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference external" href="reference.html#exceptions">Exceptions</a><ul>
+<li class="toctree-l3"><a class="reference external" href="reference.html#conditional-wsgi-application">Conditional WSGI Application</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="modules/webob.html"><tt class="docutils literal"><span class="pre">webob</span></tt> &#8211; Request/Response objects</a><ul>
+<li class="toctree-l2"><a class="reference external" href="modules/webob.html#module-webob.etag">Request</a></li>
+<li class="toctree-l2"><a class="reference external" href="modules/webob.html#module-webob.headerdict">Response</a></li>
+<li class="toctree-l2"><a class="reference external" href="modules/webob.html#module-webob.updatedict">Misc Functions</a></li>
+<li class="toctree-l2"><a class="reference external" href="modules/webob.html#descriptors">Descriptors</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="modules/dec.html"><tt class="docutils literal"><span class="pre">webob.dec</span></tt> &#8211; WSGIfy decorator</a><ul>
+<li class="toctree-l2"><a class="reference external" href="modules/dec.html#decorator">Decorator</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="differences.html">Differences Between WebOb and Other Systems</a><ul>
+<li class="toctree-l2"><a class="reference external" href="differences.html#paste-wsgiwrappers-and-pylons">paste.wsgiwrappers and Pylons</a><ul>
+<li class="toctree-l3"><a class="reference external" href="differences.html#request">Request</a></li>
+<li class="toctree-l3"><a class="reference external" href="differences.html#response">Response</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference external" href="differences.html#django">Django</a><ul>
+<li class="toctree-l3"><a class="reference external" href="differences.html#id1">Request</a></li>
+<li class="toctree-l3"><a class="reference external" href="differences.html#querydict">QueryDict</a></li>
+<li class="toctree-l3"><a class="reference external" href="differences.html#id2">Response</a></li>
+<li class="toctree-l3"><a class="reference external" href="differences.html#response-subclasses">Response Subclasses</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference external" href="differences.html#cherrypy-turbogears">CherryPy/TurboGears</a><ul>
+<li class="toctree-l3"><a class="reference external" href="differences.html#id3">Request</a></li>
+<li class="toctree-l3"><a class="reference external" href="differences.html#id4">Response</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference external" href="differences.html#yaro">Yaro</a><ul>
+<li class="toctree-l3"><a class="reference external" href="differences.html#id6">Request</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference external" href="differences.html#werkzeug">Werkzeug</a><ul>
+<li class="toctree-l3"><a class="reference external" href="differences.html#id7">Request</a></li>
+<li class="toctree-l3"><a class="reference external" href="differences.html#id8">Response</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference external" href="differences.html#zope-3">Zope 3</a><ul>
+<li class="toctree-l3"><a class="reference external" href="differences.html#id11">Request</a></li>
+<li class="toctree-l3"><a class="reference external" href="differences.html#id12">Response</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference external" href="differences.html#mod-python">mod_python</a><ul>
+<li class="toctree-l3"><a class="reference external" href="differences.html#id14">Request</a></li>
+<li class="toctree-l3"><a class="reference external" href="differences.html#id15">Response</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference external" href="differences.html#webapp-response">webapp Response</a></li>
+<li class="toctree-l2"><a class="reference external" href="differences.html#php">PHP</a><ul>
+<li class="toctree-l3"><a class="reference external" href="differences.html#post-get-files"><tt class="docutils literal"><span class="pre">$_POST</span></tt>, <tt class="docutils literal"><span class="pre">$_GET</span></tt>, <tt class="docutils literal"><span class="pre">$_FILES</span></tt></a></li>
+<li class="toctree-l3"><a class="reference external" href="differences.html#cookies"><tt class="docutils literal"><span class="pre">$_COOKIES</span></tt></a></li>
+<li class="toctree-l3"><a class="reference external" href="differences.html#server-request-env"><tt class="docutils literal"><span class="pre">$_SERVER</span></tt>, <tt class="docutils literal"><span class="pre">$_REQUEST</span></tt>, <tt class="docutils literal"><span class="pre">$_ENV</span></tt></a></li>
+<li class="toctree-l3"><a class="reference external" href="differences.html#http-raw-post-data"><tt class="docutils literal"><span class="pre">$HTTP_RAW_POST_DATA</span></tt></a></li>
+<li class="toctree-l3"><a class="reference external" href="differences.html#the-response">The response</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="file-example.html">WebOb File-Serving Example</a></li>
+<li class="toctree-l1"><a class="reference external" href="wiki-example.html">Wiki Example</a><ul>
+<li class="toctree-l2"><a class="reference external" href="wiki-example.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference external" href="wiki-example.html#code">Code</a></li>
+<li class="toctree-l2"><a class="reference external" href="wiki-example.html#creating-an-application">Creating an Application</a></li>
+<li class="toctree-l2"><a class="reference external" href="wiki-example.html#the-wsgi-application">The WSGI Application</a></li>
+<li class="toctree-l2"><a class="reference external" href="wiki-example.html#the-domain-object">The Domain Object</a></li>
+<li class="toctree-l2"><a class="reference external" href="wiki-example.html#urls-path-info-and-script-name">URLs, PATH_INFO, and SCRIPT_NAME</a></li>
+<li class="toctree-l2"><a class="reference external" href="wiki-example.html#back-to-the-application">Back to the Application</a></li>
+<li class="toctree-l2"><a class="reference external" href="wiki-example.html#the-edit-screen">The Edit Screen</a></li>
+<li class="toctree-l2"><a class="reference external" href="wiki-example.html#processing-the-form">Processing the Form</a></li>
+<li class="toctree-l2"><a class="reference external" href="wiki-example.html#cookies">Cookies</a></li>
+<li class="toctree-l2"><a class="reference external" href="wiki-example.html#conclusion">Conclusion</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="comment-example.html">Comment Example</a><ul>
+<li class="toctree-l2"><a class="reference external" href="comment-example.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference external" href="comment-example.html#code">Code</a></li>
+<li class="toctree-l2"><a class="reference external" href="comment-example.html#instantiating-middleware">Instantiating Middleware</a></li>
+<li class="toctree-l2"><a class="reference external" href="comment-example.html#the-middleware">The Middleware</a></li>
+<li class="toctree-l2"><a class="reference external" href="comment-example.html#accepting-comments">Accepting Comments</a><ul>
+<li class="toctree-l3"><a class="reference external" href="comment-example.html#submit-form">submit_form</a></li>
+<li class="toctree-l3"><a class="reference external" href="comment-example.html#process-comment">process_comment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference external" href="comment-example.html#conclusion">Conclusion</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="jsonrpc-example.html">JSON-RPC Example</a><ul>
+<li class="toctree-l2"><a class="reference external" href="jsonrpc-example.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference external" href="jsonrpc-example.html#code">Code</a></li>
+<li class="toctree-l2"><a class="reference external" href="jsonrpc-example.html#concepts">Concepts</a></li>
+<li class="toctree-l2"><a class="reference external" href="jsonrpc-example.html#infrastructure">Infrastructure</a></li>
+<li class="toctree-l2"><a class="reference external" href="jsonrpc-example.html#the-application-wrapper">The Application Wrapper</a></li>
+<li class="toctree-l2"><a class="reference external" href="jsonrpc-example.html#the-process-method">The <tt class="docutils literal"><span class="pre">process</span></tt> method</a></li>
+<li class="toctree-l2"><a class="reference external" href="jsonrpc-example.html#the-complete-code">The Complete Code</a></li>
+<li class="toctree-l2"><a class="reference external" href="jsonrpc-example.html#the-client">The Client</a></li>
+<li class="toctree-l2"><a class="reference external" href="jsonrpc-example.html#the-proxy-client">The Proxy Client</a></li>
+<li class="toctree-l2"><a class="reference external" href="jsonrpc-example.html#using-them-together">Using Them Together</a></li>
+<li class="toctree-l2"><a class="reference external" href="jsonrpc-example.html#conclusion">Conclusion</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="do-it-yourself.html">Another Do-It-Yourself Framework</a><ul>
+<li class="toctree-l2"><a class="reference external" href="do-it-yourself.html#introduction-and-audience">Introduction and Audience</a></li>
+<li class="toctree-l2"><a class="reference external" href="do-it-yourself.html#what-is-wsgi">What Is WSGI?</a></li>
+<li class="toctree-l2"><a class="reference external" href="do-it-yourself.html#about-webob">About WebOb</a></li>
+<li class="toctree-l2"><a class="reference external" href="do-it-yourself.html#serving-your-application">Serving Your Application</a></li>
+<li class="toctree-l2"><a class="reference external" href="do-it-yourself.html#making-a-framework">Making A Framework</a></li>
+<li class="toctree-l2"><a class="reference external" href="do-it-yourself.html#routing">Routing</a><ul>
+<li class="toctree-l3"><a class="reference external" href="do-it-yourself.html#routing-templates">Routing: Templates</a></li>
+<li class="toctree-l3"><a class="reference external" href="do-it-yourself.html#routing-controller-loading">Routing: controller loading</a></li>
+<li class="toctree-l3"><a class="reference external" href="do-it-yourself.html#routing-putting-it-together">Routing: putting it together</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference external" href="do-it-yourself.html#controllers">Controllers</a></li>
+<li class="toctree-l2"><a class="reference external" href="do-it-yourself.html#putting-it-together">Putting It Together</a></li>
+<li class="toctree-l2"><a class="reference external" href="do-it-yourself.html#another-controller">Another Controller</a></li>
+<li class="toctree-l2"><a class="reference external" href="do-it-yourself.html#url-generation-and-request-access">URL Generation and Request Access</a></li>
+<li class="toctree-l2"><a class="reference external" href="do-it-yourself.html#templating">Templating</a></li>
+<li class="toctree-l2"><a class="reference external" href="do-it-yourself.html#conclusion">Conclusion</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="news.html">News</a><ul>
+<li class="toctree-l2"><a class="reference external" href="news.html#id1">0.9.8</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id2">0.9.7.1</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id3">0.9.7</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id4">0.9.6.1</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id5">0.9.6</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id6">0.9.5</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id7">0.9.4</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id8">0.9.3</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id9">0.9.2</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id10">0.9.1</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id11">0.9</a><ul>
+<li class="toctree-l3"><a class="reference external" href="news.html#backward-incompatible-changes">Backward Incompatible Changes</a></li>
+<li class="toctree-l3"><a class="reference external" href="news.html#bugfixes-and-small-changes">Bugfixes and Small Changes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id12">0.8.5</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id13">0.8.4</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id14">0.8.3</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id15">0.8.2</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id16">0.8.1</a></li>
+<li class="toctree-l2"><a class="reference external" href="news.html#id17">0.8</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="license.html">License</a></li>
+</ul>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#webob" id="id1">WebOb</a><ul>
+<li><a class="reference internal" href="#status-license" id="id2">Status &amp; License</a></li>
+<li><a class="reference internal" href="#introduction" id="id3">Introduction</a></li>
+<li><a class="reference internal" href="#request" id="id4">Request</a><ul>
+<li><a class="reference internal" href="#urls" id="id5">URLs</a></li>
+<li><a class="reference internal" href="#methods" id="id6">Methods</a></li>
+<li><a class="reference internal" href="#unicode" id="id7">Unicode</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#response" id="id8">Response</a><ul>
+<li><a class="reference internal" href="#headers" id="id9">Headers</a></li>
+<li><a class="reference internal" href="#instantiating-the-response" id="id10">Instantiating the Response</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#exceptions" id="id11">Exceptions</a></li>
+<li><a class="reference internal" href="#multidict" id="id12">Multidict</a></li>
+<li><a class="reference internal" href="#example" id="id13">Example</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="status-license">
+<h2><a class="toc-backref" href="#id2">Status &amp; License</a><a class="headerlink" href="#status-license" title="Permalink to this headline">¶</a></h2>
+<p>WebOb is an extraction and refinement of pieces from <a class="reference external" href="http://pythonpaste.org/">Paste</a>.  It is under active development.
+Discussion should happen on the <a class="reference external" href="http://pythonpaste.org/community/">Paste mailing lists</a>, and bugs can go on the <a class="reference external" href="http://trac.pythonpaste.org/">Paste
+trac instance</a>.</p>
+<p>WebOb is released under an <a class="reference external" href="license.html">MIT-style license</a>.</p>
+<p>WebOb is in a Mercurial repository at
+<a class="reference external" href="http://bitbucket.org/ianb/webob/">http://bitbucket.org/ianb/webob/</a>, and installable via <a class="reference external" href="http://bitbucket.org/ianb/webob/get/tip.gz">easy_install
+webob==dev</a>.  You
+can check it out with:</p>
+<div class="highlight-python"><pre>$ hg clone http://bitbucket.org/ianb/webob</pre>
+</div>
+</div>
+<div class="section" id="introduction">
+<h2><a class="toc-backref" href="#id3">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>WebOb provides objects for HTTP requests and responses.  Specifically
+it does this by wrapping the <a class="reference external" href="http://wsgi.org">WSGI</a> request
+environment and response status/headers/app_iter(body).</p>
+<p>The request and response objects provide many conveniences for parsing
+HTTP request and forming HTTP responses.  Both objects are read/write:
+as a result, WebOb is also a nice way to create HTTP requests and
+parse HTTP responses; however, we won&#8217;t cover that use case in this
+document.  The <a class="reference external" href="reference.html">reference documentation</a> shows many
+examples of creating requests.</p>
+</div>
+<div class="section" id="request">
+<h2><a class="toc-backref" href="#id4">Request</a><a class="headerlink" href="#request" title="Permalink to this headline">¶</a></h2>
+<p>The request object is a wrapper around the <a class="reference external" href="http://www.python.org/dev/peps/pep-0333/#environ-variables">WSGI environ dictionary</a>.  This
+dictionary contains keys for each header, keys that describe the
+request (including the path and query string), a file-like object for
+the request body, and a variety of custom keys.  You can always access
+the environ with <tt class="docutils literal"><span class="pre">req.environ</span></tt>.</p>
+<p>Some of the most important/interesting attributes of a request
+object:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">req.method</span></tt>:</dt>
+<dd>The request method, e.g., <tt class="docutils literal"><span class="pre">'GET'</span></tt>, <tt class="docutils literal"><span class="pre">'POST'</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">req.GET</span></tt>:</dt>
+<dd>A <a class="reference external" href="#multidict">dictionary-like object</a> with all the variables in the query
+string.</dd>
+<dt><tt class="docutils literal"><span class="pre">req.POST</span></tt>:</dt>
+<dd>A <a class="reference external" href="#multidict">dictionary-like object</a> with all the variables in the request
+body.  This only has variables if the request was a <tt class="docutils literal"><span class="pre">POST</span></tt> and
+it is a form submission.</dd>
+<dt><tt class="docutils literal"><span class="pre">req.params</span></tt>:</dt>
+<dd>A <a class="reference external" href="#multidict">dictionary-like object</a> with a combination of everything in
+<tt class="docutils literal"><span class="pre">req.GET</span></tt> and <tt class="docutils literal"><span class="pre">req.POST</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">req.body</span></tt>:</dt>
+<dd>The contents of the body of the request.  This contains the entire
+request body as a string.  This is useful when the request is a
+<tt class="docutils literal"><span class="pre">POST</span></tt> that is <em>not</em> a form submission, or a request like a
+<tt class="docutils literal"><span class="pre">PUT</span></tt>.  You can also get <tt class="docutils literal"><span class="pre">req.body_file</span></tt> for a file-like
+object.</dd>
+<dt><tt class="docutils literal"><span class="pre">req.cookies</span></tt>:</dt>
+<dd>A simple dictionary of all the cookies.</dd>
+<dt><tt class="docutils literal"><span class="pre">req.headers</span></tt>:</dt>
+<dd>A dictionary of all the headers.  This is dictionary is case-insensitive.</dd>
+<dt><tt class="docutils literal"><span class="pre">req.urlvars</span></tt> and <tt class="docutils literal"><span class="pre">req.urlargs</span></tt>:</dt>
+<dd><tt class="docutils literal"><span class="pre">req.urlvars</span></tt> is the keyword parameters associated with the
+request URL.  <tt class="docutils literal"><span class="pre">req.urlargs</span></tt> are the positional parameters.
+These are set by products like <a class="reference external" href="http://routes.groovie.org/">Routes</a> and <a class="reference external" href="http://lukearno.com/projects/selector/">Selector</a>.</dd>
+</dl>
+<p>Also, for standard HTTP request headers there are usually attributes,
+for instance: <tt class="docutils literal"><span class="pre">req.accept_language</span></tt>, <tt class="docutils literal"><span class="pre">req.content_length</span></tt>,
+<tt class="docutils literal"><span class="pre">req.user_agent</span></tt>, as an example.  These properties expose the
+<em>parsed</em> form of each header, for whatever parsing makes sense.  For
+instance, <tt class="docutils literal"><span class="pre">req.if_modified_since</span></tt> returns a <a class="reference external" href="http://python.org/doc/current/lib/datetime-datetime.html">datetime</a> object
+(or None if the header is was not provided).  Details are in the
+<a class="reference external" href="class-webob.Request.html">Request reference</a>.</p>
+<div class="section" id="urls">
+<h3><a class="toc-backref" href="#id5">URLs</a><a class="headerlink" href="#urls" title="Permalink to this headline">¶</a></h3>
+<p>In addition to these attributes, there are several ways to get the URL
+of the request.  I&#8217;ll show various values for an example URL
+<tt class="docutils literal"><span class="pre">http://localhost/app-root/doc?article_id=10</span></tt>, where the application
+is mounted at <tt class="docutils literal"><span class="pre">http://localhost/app-root</span></tt>.</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">req.url</span></tt>:</dt>
+<dd>The full request URL, with query string, e.g.,
+<tt class="docutils literal"><span class="pre">'http://localhost/app-root/doc?article_id=10'</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">req.application_url</span></tt>:</dt>
+<dd>The URL of the application (just the SCRIPT_NAME portion of the
+path, not PATH_INFO).  E.g., <tt class="docutils literal"><span class="pre">'http://localhost/app-root'</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">req.host_url</span></tt>:</dt>
+<dd>The URL with the host, e.g., <tt class="docutils literal"><span class="pre">'http://localhost'</span></tt></dd>
+<dt><tt class="docutils literal"><span class="pre">req.relative_url(url,</span> <span class="pre">to_application=False)</span></tt>:</dt>
+<dd>Gives a URL, relative to the current URL.  If <tt class="docutils literal"><span class="pre">to_application</span></tt>
+is True, then resolves it relative to <tt class="docutils literal"><span class="pre">req.application_url</span></tt>.</dd>
+</dl>
+</div>
+<div class="section" id="methods">
+<h3><a class="toc-backref" href="#id6">Methods</a><a class="headerlink" href="#methods" title="Permalink to this headline">¶</a></h3>
+<p>There are <a class="reference external" href="class-webob.Request.html#__init__">several methods</a> but
+only a few you&#8217;ll use often:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">Request.blank(base_url)</span></tt>:</dt>
+<dd>Creates a new request with blank information, based at the given
+URL.  This can be useful for subrequests and artificial requests.
+You can also use <tt class="docutils literal"><span class="pre">req.copy()</span></tt> to copy an existing request, or
+for subrequests <tt class="docutils literal"><span class="pre">req.copy_get()</span></tt> which copies the request but
+always turns it into a GET (which is safer to share for
+subrequests).</dd>
+<dt><tt class="docutils literal"><span class="pre">req.get_response(wsgi_application)</span></tt>:</dt>
+<dd>This method calls the given WSGI application with this request,
+and returns a <a class="reference internal" href="#response">Response</a> object.  You can also use this for
+subrequests or testing.</dd>
+</dl>
+</div>
+<div class="section" id="unicode">
+<h3><a class="toc-backref" href="#id7">Unicode</a><a class="headerlink" href="#unicode" title="Permalink to this headline">¶</a></h3>
+<p>Many of the properties in the request object will return unicode
+values if the request encoding/charset is provided.  The client <em>can</em>
+indicate the charset with something like <tt class="docutils literal"><span class="pre">Content-Type:</span>
+<span class="pre">application/x-www-form-urlencoded;</span> <span class="pre">charset=utf8</span></tt>, but browsers seldom
+set this.  You can set the charset with <tt class="docutils literal"><span class="pre">req.charset</span> <span class="pre">=</span> <span class="pre">'utf8'</span></tt>, or
+during instantiation with <tt class="docutils literal"><span class="pre">Request(environ,</span> <span class="pre">charset='utf8').</span>&nbsp; <span class="pre">If</span> <span class="pre">you</span>
+<span class="pre">subclass</span> <span class="pre">``Request</span></tt> you can also set <tt class="docutils literal"><span class="pre">charset</span></tt> as a class-level
+attribute.</p>
+<p>If it is set, then <tt class="docutils literal"><span class="pre">req.POST</span></tt>, <tt class="docutils literal"><span class="pre">req.GET</span></tt>, <tt class="docutils literal"><span class="pre">req.params</span></tt>, and
+<tt class="docutils literal"><span class="pre">req.cookies</span></tt> will contain unicode strings.  Each has a
+corresponding <tt class="docutils literal"><span class="pre">req.str_*</span></tt> (like <tt class="docutils literal"><span class="pre">req.str_POST</span></tt>) that is always
+<tt class="docutils literal"><span class="pre">str</span></tt> and never unicode.</p>
+</div>
+</div>
+<div class="section" id="response">
+<h2><a class="toc-backref" href="#id8">Response</a><a class="headerlink" href="#response" title="Permalink to this headline">¶</a></h2>
+<p>The response object looks a lot like the request object, though with
+some differences.  The request object wraps a single <tt class="docutils literal"><span class="pre">environ</span></tt>
+object; the response object has three fundamental parts (based on
+WSGI):</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">response.status</span></tt>:</dt>
+<dd>The response code plus message, like <tt class="docutils literal"><span class="pre">'200</span> <span class="pre">OK'</span></tt>.  To set the
+code without the reason, use <tt class="docutils literal"><span class="pre">response.status_int</span> <span class="pre">=</span> <span class="pre">200</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">response.headerlist</span></tt>:</dt>
+<dd>A list of all the headers, like <tt class="docutils literal"><span class="pre">[('Content-Type',</span>
+<span class="pre">'text/html')]</span></tt>.  There&#8217;s a case-insensitive <a class="reference external" href="#multidict">dictionary-like
+object</a> in <tt class="docutils literal"><span class="pre">response.headers</span></tt> that also allows you to access
+these same headers.</dd>
+<dt><tt class="docutils literal"><span class="pre">response.app_iter</span></tt>:</dt>
+<dd>An iterable (such as a list or generator) that will produce the
+content of the response.  This is also accessible as
+<tt class="docutils literal"><span class="pre">response.body</span></tt> (a string), <tt class="docutils literal"><span class="pre">response.unicode_body</span></tt> (a
+unicode object, informed by <tt class="docutils literal"><span class="pre">response.charset</span></tt>), and
+<tt class="docutils literal"><span class="pre">response.body_file</span></tt> (a file-like object; writing to it appends
+to <tt class="docutils literal"><span class="pre">app_iter</span></tt>).</dd>
+</dl>
+<p>Everything else in the object derives from this underlying state.
+Here&#8217;s the highlights:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">response.content_type</span></tt>:</dt>
+<dd>The content type <em>not</em> including the <tt class="docutils literal"><span class="pre">charset</span></tt> parameter.
+Typical use: <tt class="docutils literal"><span class="pre">response.content_type</span> <span class="pre">=</span> <span class="pre">'text/html'</span></tt>.  You can
+subclass <tt class="docutils literal"><span class="pre">Response</span></tt> and add a class-level attribute
+<tt class="docutils literal"><span class="pre">default_content_type</span></tt> to set this automatically on
+instantiation.</dd>
+<dt><tt class="docutils literal"><span class="pre">response.charset</span></tt>:</dt>
+<dd>The <tt class="docutils literal"><span class="pre">charset</span></tt> parameter of the content-type, it also informs
+encoding in <tt class="docutils literal"><span class="pre">response.unicode_body</span></tt>.
+<tt class="docutils literal"><span class="pre">response.content_type_params</span></tt> is a dictionary of all the
+parameters.</dd>
+<dt><tt class="docutils literal"><span class="pre">response.request</span></tt>:</dt>
+<dd>This optional attribute can point to the request object associated
+with this response object.</dd>
+<dt><tt class="docutils literal"><span class="pre">response.set_cookie(key,</span> <span class="pre">value,</span> <span class="pre">max_age=None,</span> <span class="pre">path='/',</span> <span class="pre">domain=None,</span> <span class="pre">secure=None,</span> <span class="pre">httponly=False,</span> <span class="pre">version=None,</span> <span class="pre">comment=None)</span></tt>:</dt>
+<dd>Set a cookie.  The keyword arguments control the various cookie
+parameters.  The <tt class="docutils literal"><span class="pre">max_age</span></tt> argument is the length for the cookie
+to live in seconds (you may also use a timedelta object).  The
+<cite>Expires`</cite> key will also be set based on the value of <tt class="docutils literal"><span class="pre">max_age</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">response.delete_cookie(key,</span> <span class="pre">path='/',</span> <span class="pre">domain=None)</span></tt>:</dt>
+<dd>Delete a cookie from the client.  This sets <tt class="docutils literal"><span class="pre">max_age</span></tt> to 0 and
+the cookie value to <tt class="docutils literal"><span class="pre">''</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">response.cache_expires(seconds=0)</span></tt>:</dt>
+<dd>This makes this response cachable for the given number of seconds,
+or if <tt class="docutils literal"><span class="pre">seconds</span></tt> is 0 then the response is uncacheable (this also
+sets the <tt class="docutils literal"><span class="pre">Expires</span></tt> header).</dd>
+<dt><tt class="docutils literal"><span class="pre">response(environ,</span> <span class="pre">start_response)</span></tt>: The response object is a WSGI</dt>
+<dd>application.  As an application, it acts according to how you
+creat it.  It <em>can</em> do conditional responses if you pass
+<tt class="docutils literal"><span class="pre">conditional_response=True</span></tt> when instantiating (or set that
+attribute later).  It can also do HEAD and Range requests.</dd>
+</dl>
+<div class="section" id="headers">
+<h3><a class="toc-backref" href="#id9">Headers</a><a class="headerlink" href="#headers" title="Permalink to this headline">¶</a></h3>
+<p>Like the request, most HTTP response headers are available as
+properties.  These are parsed, so you can do things like
+<tt class="docutils literal"><span class="pre">response.last_modified</span> <span class="pre">=</span> <span class="pre">os.path.getmtime(filename)</span></tt>.</p>
+<p>The details are available in the <a class="reference external" href="class-webob.Response.html">extracted Response documentation</a>.</p>
+</div>
+<div class="section" id="instantiating-the-response">
+<h3><a class="toc-backref" href="#id10">Instantiating the Response</a><a class="headerlink" href="#instantiating-the-response" title="Permalink to this headline">¶</a></h3>
+<p>Of course most of the time you just want to <em>make</em> a response.
+Generally any attribute of the response can be passed in as a keyword
+argument to the class; e.g.:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">response</span> <span class="o">=</span> <span class="n">Response</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="s">&#39;hello world!&#39;</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="s">&#39;text/plain&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The status defaults to <tt class="docutils literal"><span class="pre">'200</span> <span class="pre">OK'</span></tt>.  The content_type does not
+default to anything, though if you subclass <tt class="docutils literal"><span class="pre">Response</span></tt> and set
+<tt class="docutils literal"><span class="pre">default_content_type</span></tt> you can override this behavior.</p>
+</div>
+</div>
+<div class="section" id="exceptions">
+<h2><a class="toc-backref" href="#id11">Exceptions</a><a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h2>
+<p>To facilitate error responses like 404 Not Found, the module
+<tt class="docutils literal"><span class="pre">webob.exc</span></tt> contains classes for each kind of error response.  These
+include boring but appropriate error bodies.</p>
+<p>Each class is named <tt class="docutils literal"><span class="pre">webob.exc.HTTP*</span></tt>, where <tt class="docutils literal"><span class="pre">*</span></tt> is the reason for
+the error.  For instance, <tt class="docutils literal"><span class="pre">webob.exc.HTTPNotFound</span></tt>.  It subclasses
+<tt class="docutils literal"><span class="pre">Response</span></tt>, so you can manipulate the instances in the same way.  A
+typical example is:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">response</span> <span class="o">=</span> <span class="n">HTTPNotFound</span><span class="p">(</span><span class="s">&#39;There is no such resource&#39;</span><span class="p">)</span>
+<span class="c"># or:</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">HTTPMovedPermanently</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="n">new_url</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>These are not exceptions unless you are using Python 2.5+, because
+they are new-style classes which are not allowed as exceptions until
+Python 2.5.  To get an exception object use <tt class="docutils literal"><span class="pre">response.exception</span></tt>.
+You can use this like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">try</span><span class="p">:</span>
+    <span class="o">...</span> <span class="n">stuff</span> <span class="o">...</span>
+    <span class="k">raise</span> <span class="n">HTTPNotFound</span><span class="p">(</span><span class="s">&#39;No such resource&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">exception</span>
+<span class="k">except</span> <span class="n">HTTPException</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">e</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The exceptions are still WSGI applications, but you cannot set
+attributes like <tt class="docutils literal"><span class="pre">content_type</span></tt>, <tt class="docutils literal"><span class="pre">charset</span></tt>, etc. on these exception
+objects.</p>
+</div>
+<div class="section" id="multidict">
+<h2><a class="toc-backref" href="#id12">Multidict</a><a class="headerlink" href="#multidict" title="Permalink to this headline">¶</a></h2>
+<p>Several parts of WebOb use a &#8220;multidict&#8221;; this is a dictionary where a
+key can have multiple values.  The quintessential example is a query
+string like <tt class="docutils literal"><span class="pre">?pref=red&amp;pref=blue</span></tt>; the <tt class="docutils literal"><span class="pre">pref</span></tt> variable has two
+values: <tt class="docutils literal"><span class="pre">red</span></tt> and <tt class="docutils literal"><span class="pre">blue</span></tt>.</p>
+<p>In a multidict, when you do <tt class="docutils literal"><span class="pre">request.GET['pref']</span></tt> you&#8217;ll get back
+only <tt class="docutils literal"><span class="pre">'blue'</span></tt> (the last value of <tt class="docutils literal"><span class="pre">pref</span></tt>).  Sometimes returning a
+string, and sometimes returning a list, is the cause of frequent
+exceptions.  If you want <em>all</em> the values back, use
+<tt class="docutils literal"><span class="pre">request.GET.getall('pref')</span></tt>.  If you want to be sure there is <em>one
+and only one</em> value, use <tt class="docutils literal"><span class="pre">request.GET.getone('pref')</span></tt>, which will
+raise an exception if there is zero or more than one value for
+<tt class="docutils literal"><span class="pre">pref</span></tt>.</p>
+<p>When you use operations like <tt class="docutils literal"><span class="pre">request.GET.items()</span></tt> you&#8217;ll get back
+something like <tt class="docutils literal"><span class="pre">[('pref',</span> <span class="pre">'red'),</span> <span class="pre">('pref',</span> <span class="pre">'blue')]</span></tt>.  All the
+key/value pairs will show up.  Similarly <tt class="docutils literal"><span class="pre">request.GET.keys()</span></tt>
+returns <tt class="docutils literal"><span class="pre">['pref',</span> <span class="pre">'pref']</span></tt>.  Multidict is a view on a list of
+tuples; all the keys are ordered, and all the values are ordered.</p>
+</div>
+<div class="section" id="example">
+<h2><a class="toc-backref" href="#id13">Example</a><a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>I haven&#8217;t figured out the example I want to use here.  The
+<a class="reference external" href="file-example.html">file-serving example</a> shows how to do more
+advanced HTTP techniques, while the <a class="reference external" href="comment-example.html">comment middleware example</a> shows middleware.  For applications it&#8217;s more
+reasonable to use WebOb in the context of a larger framework.  <a class="reference external" href="http://pylonshq.com">Pylons</a> uses WebOb in 0.9.7+.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">WebOb</a><ul>
+<li><a class="reference external" href="#status-license">Status &amp; License</a></li>
+<li><a class="reference external" href="#introduction">Introduction</a></li>
+<li><a class="reference external" href="#request">Request</a><ul>
+<li><a class="reference external" href="#urls">URLs</a></li>
+<li><a class="reference external" href="#methods">Methods</a></li>
+<li><a class="reference external" href="#unicode">Unicode</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#response">Response</a><ul>
+<li><a class="reference external" href="#headers">Headers</a></li>
+<li><a class="reference external" href="#instantiating-the-response">Instantiating the Response</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#exceptions">Exceptions</a></li>
+<li><a class="reference external" href="#multidict">Multidict</a></li>
+<li><a class="reference external" href="#example">Example</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Next topic</h4>
+            <p class="topless"><a href="reference.html"
+                                  title="next chapter">WebOb Reference</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/index.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="reference.html" title="WebOb Reference"
+             >next</a> |</li>
+        <li><a href="">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2008, Ian Bicking.
+      Last updated on Feb 03, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

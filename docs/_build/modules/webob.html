@@ -1,0 +1,319 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>webob – Request/Response objects &mdash; WebOb v0.9.8 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.9.8',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="WebOb v0.9.8 documentation" href="../index.html" />
+    <link rel="next" title="webob.dec – WSGIfy decorator" href="dec.html" />
+    <link rel="prev" title="WebOb Reference" href="../reference.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="dec.html" title="webob.dec – WSGIfy decorator"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../reference.html" title="WebOb Reference"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-webob">
+<h1><tt class="xref docutils literal"><span class="pre">webob</span></tt> &#8211; Request/Response objects<a class="headerlink" href="#module-webob" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-webob.etag">
+<h2>Request<a class="headerlink" href="#module-webob.etag" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="webob.Request">
+<em class="property">class </em><tt class="descclassname">webob.</tt><tt class="descname">Request</tt><big>(</big><em>environ=None</em>, <em>environ_getter=None</em>, <em>charset=(No Default)</em>, <em>unicode_errors=(No Default)</em>, <em>decode_param_names=(No Default)</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#webob.Request" title="Permalink to this definition">¶</a></dt>
+<dd>The default request implementation</dd></dl>
+
+<p>Parses a variety of <tt class="docutils literal"><span class="pre">Accept-*</span></tt> headers.</p>
+<p>These headers generally take the form of:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">value1</span><span class="p">;</span> <span class="n">q</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">value2</span><span class="p">;</span> <span class="n">q</span><span class="o">=</span><span class="mf">0</span>
+</pre></div>
+</div>
+<p>Where the <tt class="docutils literal"><span class="pre">q</span></tt> parameter is optional.  In theory other parameters
+exists, but this ignores them.</p>
+<dl class="class">
+<dt id="webob.acceptparse.Accept">
+<em class="property">class </em><tt class="descclassname">webob.acceptparse.</tt><tt class="descname">Accept</tt><big>(</big><em>header_name</em>, <em>header_value</em><big>)</big><a class="headerlink" href="#webob.acceptparse.Accept" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a generic <tt class="docutils literal"><span class="pre">Accept-*</span></tt> style header.</p>
+<p>This object should not be modified.  To add items you can use
+<tt class="docutils literal"><span class="pre">accept_obj</span> <span class="pre">+</span> <span class="pre">'accept_thing'</span></tt> to get a new object</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="webob.acceptparse.MIMEAccept">
+<em class="property">class </em><tt class="descclassname">webob.acceptparse.</tt><tt class="descname">MIMEAccept</tt><big>(</big><em>header_name</em>, <em>header_value</em><big>)</big><a class="headerlink" href="#webob.acceptparse.MIMEAccept" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents the <tt class="docutils literal"><span class="pre">Accept</span></tt> header, which is a list of mimetypes.</p>
+<p>This class knows about mime wildcards, like <tt class="docutils literal"><span class="pre">image/*</span></tt></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="webob.byterange.Range">
+<em class="property">class </em><tt class="descclassname">webob.byterange.</tt><tt class="descname">Range</tt><big>(</big><em>ranges</em><big>)</big><a class="headerlink" href="#webob.byterange.Range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents the Range header.</p>
+<p>This only represents <tt class="docutils literal"><span class="pre">bytes</span></tt> ranges, which are the only kind
+specified in HTTP.  This can represent multiple sets of ranges,
+but no place else is this multi-range facility supported.</p>
+</dd></dl>
+
+<p>Represents the Cache-Control header</p>
+<dl class="class">
+<dt id="webob.cachecontrol.CacheControl">
+<em class="property">class </em><tt class="descclassname">webob.cachecontrol.</tt><tt class="descname">CacheControl</tt><big>(</big><em>properties</em>, <em>type</em><big>)</big><a class="headerlink" href="#webob.cachecontrol.CacheControl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents the Cache-Control header.</p>
+<p>By giving a type of <tt class="docutils literal"><span class="pre">'request'</span></tt> or <tt class="docutils literal"><span class="pre">'response'</span></tt> you can
+control what attributes are allowed (some Cache-Control values
+only apply to requests or responses).</p>
+</dd></dl>
+
+<p>Contains some data structures.</p>
+<dl class="class">
+<dt id="webob.datastruct.EnvironHeaders">
+<em class="property">class </em><tt class="descclassname">webob.datastruct.</tt><tt class="descname">EnvironHeaders</tt><big>(</big><em>environ</em><big>)</big><a class="headerlink" href="#webob.datastruct.EnvironHeaders" title="Permalink to this definition">¶</a></dt>
+<dd><p>An object that represents the headers as present in a
+WSGI environment.</p>
+<p>This object is a wrapper (with no internal state) for a WSGI
+request object, representing the CGI-style HTTP_* keys as a
+dictionary.  Because a CGI environment can only hold one value for
+each key, this dictionary is single-valued (unlike outgoing
+headers).</p>
+</dd></dl>
+
+<p>Does parsing of ETag-related headers: If-None-Matches, If-Matches</p>
+<p>Also If-Range parsing</p>
+<dl class="class">
+<dt id="webob.etag.ETagMatcher">
+<em class="property">class </em><tt class="descclassname">webob.etag.</tt><tt class="descname">ETagMatcher</tt><big>(</big><em>etags</em>, <em>weak_etags=()</em><big>)</big><a class="headerlink" href="#webob.etag.ETagMatcher" title="Permalink to this definition">¶</a></dt>
+<dd>Represents an ETag request.  Supports containment to see if an
+ETag matches.  You can also use
+<tt class="docutils literal"><span class="pre">etag_matcher.weak_contains(etag)</span></tt> to allow weak ETags to match
+(allowable for conditional GET requests, but not ranges or other
+methods).</dd></dl>
+
+<dl class="class">
+<dt id="webob.etag.IfRange">
+<em class="property">class </em><tt class="descclassname">webob.etag.</tt><tt class="descname">IfRange</tt><big>(</big><em>etag=None</em>, <em>date=None</em><big>)</big><a class="headerlink" href="#webob.etag.IfRange" title="Permalink to this definition">¶</a></dt>
+<dd>Parses and represents the If-Range header, which can be
+an ETag <em>or</em> a date</dd></dl>
+
+</div>
+<div class="section" id="module-webob.headerdict">
+<h2>Response<a class="headerlink" href="#module-webob.headerdict" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="webob.Response">
+<em class="property">class </em><tt class="descclassname">webob.</tt><tt class="descname">Response</tt><big>(</big><em>body=None</em>, <em>status=None</em>, <em>headerlist=None</em>, <em>app_iter=None</em>, <em>request=None</em>, <em>content_type=None</em>, <em>conditional_response=None</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#webob.Response" title="Permalink to this definition">¶</a></dt>
+<dd>Represents a WSGI response</dd></dl>
+
+<dl class="class">
+<dt id="webob.byterange.ContentRange">
+<em class="property">class </em><tt class="descclassname">webob.byterange.</tt><tt class="descname">ContentRange</tt><big>(</big><em>start</em>, <em>stop</em>, <em>length</em><big>)</big><a class="headerlink" href="#webob.byterange.ContentRange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents the Content-Range header</p>
+<p>This header is <tt class="docutils literal"><span class="pre">start-stop/length</span></tt>, where start-stop and length
+can be <tt class="docutils literal"><span class="pre">*</span></tt> (represented as None in the attributes).</p>
+</dd></dl>
+
+<dl class="class">
+<dt>
+<em class="property">class </em><tt class="descclassname">webob.cachecontrol.</tt><tt class="descname">CacheControl</tt><big>(</big><em>properties</em>, <em>type</em><big>)</big></dt>
+<dd><p>Represents the Cache-Control header.</p>
+<p>By giving a type of <tt class="docutils literal"><span class="pre">'request'</span></tt> or <tt class="docutils literal"><span class="pre">'response'</span></tt> you can
+control what attributes are allowed (some Cache-Control values
+only apply to requests or responses).</p>
+</dd></dl>
+
+<p>Represents the response header list as a dictionary-like object.</p>
+<dl class="class">
+<dt id="webob.headerdict.HeaderDict">
+<em class="property">class </em><tt class="descclassname">webob.headerdict.</tt><tt class="descname">HeaderDict</tt><big>(</big><em>*args</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#webob.headerdict.HeaderDict" title="Permalink to this definition">¶</a></dt>
+<dd>Like a MultiDict, this wraps a list.  Keys are normalized
+for case and whitespace.</dd></dl>
+
+</div>
+<div class="section" id="module-webob.updatedict">
+<h2>Misc Functions<a class="headerlink" href="#module-webob.updatedict" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="webob.html_escape">
+<tt class="descclassname">webob.</tt><tt class="descname">html_escape</tt><big>(</big><em>s</em><big>)</big><a class="headerlink" href="#webob.html_escape" title="Permalink to this definition">¶</a></dt>
+<dd><p>HTML-escape a string or object</p>
+<p>This converts any non-string objects passed into it to strings
+(actually, using <tt class="docutils literal"><span class="pre">unicode()</span></tt>).  All values returned are
+non-unicode strings (using <tt class="docutils literal"><span class="pre">&amp;#num;</span></tt> entities for all non-ASCII
+characters).</p>
+<p>None is treated specially, and returns the empty string.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="webob.response.AppIterRange">
+<em class="property">class </em><tt class="descclassname">webob.response.</tt><tt class="descname">AppIterRange</tt><big>(</big><em>app_iter</em>, <em>start</em>, <em>stop</em><big>)</big><a class="headerlink" href="#webob.response.AppIterRange" title="Permalink to this definition">¶</a></dt>
+<dd>Wraps an app_iter, returning just a range of bytes</dd></dl>
+
+<p>Gives a multi-value dictionary object (MultiDict) plus several wrappers</p>
+<dl class="class">
+<dt id="webob.multidict.MultiDict">
+<em class="property">class </em><tt class="descclassname">webob.multidict.</tt><tt class="descname">MultiDict</tt><big>(</big><em>*args</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#webob.multidict.MultiDict" title="Permalink to this definition">¶</a></dt>
+<dd>An ordered dictionary that can have multiple values for each key.
+Adds the methods getall, getone, mixed, and add to the normal
+dictionary interface.</dd></dl>
+
+<dl class="class">
+<dt id="webob.multidict.UnicodeMultiDict">
+<em class="property">class </em><tt class="descclassname">webob.multidict.</tt><tt class="descname">UnicodeMultiDict</tt><big>(</big><em>multi=None</em>, <em>encoding=None</em>, <em>errors='strict'</em>, <em>decode_keys=False</em><big>)</big><a class="headerlink" href="#webob.multidict.UnicodeMultiDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>A MultiDict wrapper that decodes returned values to unicode on the
+fly. Decoding is not applied to assigned values.</p>
+<p>The key/value contents are assumed to be <tt class="docutils literal"><span class="pre">str</span></tt>/<tt class="docutils literal"><span class="pre">strs</span></tt> or
+<tt class="docutils literal"><span class="pre">str</span></tt>/<tt class="docutils literal"><span class="pre">FieldStorages</span></tt> (as is returned by the <tt class="docutils literal"><span class="pre">paste.request.parse_</span></tt>
+functions).</p>
+<p>Can optionally also decode keys when the <tt class="docutils literal"><span class="pre">decode_keys</span></tt> argument is
+True.</p>
+<p><tt class="docutils literal"><span class="pre">FieldStorage</span></tt> instances are cloned, and the clone&#8217;s <tt class="docutils literal"><span class="pre">filename</span></tt>
+variable is decoded. Its <tt class="docutils literal"><span class="pre">name</span></tt> variable is decoded when <tt class="docutils literal"><span class="pre">decode_keys</span></tt>
+is enabled.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="webob.multidict.NestedMultiDict">
+<em class="property">class </em><tt class="descclassname">webob.multidict.</tt><tt class="descname">NestedMultiDict</tt><big>(</big><em>*dicts</em><big>)</big><a class="headerlink" href="#webob.multidict.NestedMultiDict" title="Permalink to this definition">¶</a></dt>
+<dd>Wraps several MultiDict objects, treating it as one large MultiDict</dd></dl>
+
+<dl class="class">
+<dt id="webob.multidict.NoVars">
+<em class="property">class </em><tt class="descclassname">webob.multidict.</tt><tt class="descname">NoVars</tt><big>(</big><em>reason=None</em><big>)</big><a class="headerlink" href="#webob.multidict.NoVars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents no variables; used when no variables
+are applicable.</p>
+<p>This is read-only</p>
+</dd></dl>
+
+<p>Dict that has a callback on all updates</p>
+<dl class="class">
+<dt id="webob.updatedict.UpdateDict">
+<em class="property">class </em><tt class="descclassname">webob.updatedict.</tt><tt class="descname">UpdateDict</tt><a class="headerlink" href="#webob.updatedict.UpdateDict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="descriptors">
+<h2>Descriptors<a class="headerlink" href="#descriptors" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="webob.descriptors.environ_getter">
+<em class="property">class </em><tt class="descclassname">webob.descriptors.</tt><tt class="descname">environ_getter</tt><big>(</big><em>key</em>, <em>default=''</em>, <em>default_factory=None</em>, <em>settable=True</em>, <em>deletable=True</em>, <em>doc=None</em>, <em>rfc_section=None</em><big>)</big><a class="headerlink" href="#webob.descriptors.environ_getter" title="Permalink to this definition">¶</a></dt>
+<dd>For delegating an attribute to a key in self.environ.</dd></dl>
+
+<dl class="class">
+<dt id="webob.descriptors.header_getter">
+<em class="property">class </em><tt class="descclassname">webob.descriptors.</tt><tt class="descname">header_getter</tt><big>(</big><em>header</em>, <em>default=None</em>, <em>settable=True</em>, <em>deletable=True</em>, <em>doc=None</em>, <em>rfc_section=None</em><big>)</big><a class="headerlink" href="#webob.descriptors.header_getter" title="Permalink to this definition">¶</a></dt>
+<dd>For delegating an attribute to a header in self.headers</dd></dl>
+
+<dl class="class">
+<dt id="webob.descriptors.converter">
+<em class="property">class </em><tt class="descclassname">webob.descriptors.</tt><tt class="descname">converter</tt><big>(</big><em>descriptor</em>, <em>getter_converter</em>, <em>setter_converter</em>, <em>convert_name=None</em>, <em>doc=None</em>, <em>converter_args=()</em><big>)</big><a class="headerlink" href="#webob.descriptors.converter" title="Permalink to this definition">¶</a></dt>
+<dd>Wraps a descriptor, and applies additional conversions when reading and writing</dd></dl>
+
+<dl class="class">
+<dt id="webob.descriptors.deprecated_property">
+<em class="property">class </em><tt class="descclassname">webob.descriptors.</tt><tt class="descname">deprecated_property</tt><big>(</big><em>descriptor</em>, <em>attr</em>, <em>message</em>, <em>warning=True</em><big>)</big><a class="headerlink" href="#webob.descriptors.deprecated_property" title="Permalink to this definition">¶</a></dt>
+<dd>Wraps a descriptor, with a deprecation warning or error</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="../index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href=""><tt class="docutils literal"><span class="pre">webob</span></tt> &#8211; Request/Response objects</a><ul>
+<li><a class="reference external" href="#module-webob.etag">Request</a></li>
+<li><a class="reference external" href="#module-webob.headerdict">Response</a></li>
+<li><a class="reference external" href="#module-webob.updatedict">Misc Functions</a></li>
+<li><a class="reference external" href="#descriptors">Descriptors</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="../reference.html"
+                                  title="previous chapter">WebOb Reference</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="dec.html"
+                                  title="next chapter"><tt class="docutils literal docutils literal docutils literal"><span class="pre">webob.dec</span></tt> &#8211; WSGIfy decorator</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="../_sources/modules/webob.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="../search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dec.html" title="webob.dec – WSGIfy decorator"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../reference.html" title="WebOb Reference"
+             >previous</a> |</li>
+        <li><a href="../index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2008, Ian Bicking.
+      Last updated on Feb 03, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

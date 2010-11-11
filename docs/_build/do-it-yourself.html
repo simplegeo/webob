@@ -1,0 +1,613 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Another Do-It-Yourself Framework &mdash; WebOb v0.9.8 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.9.8',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="WebOb v0.9.8 documentation" href="index.html" />
+    <link rel="next" title="News" href="news.html" />
+    <link rel="prev" title="JSON-RPC Example" href="jsonrpc-example.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="news.html" title="News"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="jsonrpc-example.html" title="JSON-RPC Example"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="another-do-it-yourself-framework">
+<h1><a class="toc-backref" href="#id1">Another Do-It-Yourself Framework</a><a class="headerlink" href="#another-do-it-yourself-framework" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#another-do-it-yourself-framework" id="id1">Another Do-It-Yourself Framework</a><ul>
+<li><a class="reference internal" href="#introduction-and-audience" id="id2">Introduction and Audience</a></li>
+<li><a class="reference internal" href="#what-is-wsgi" id="id3">What Is WSGI?</a></li>
+<li><a class="reference internal" href="#about-webob" id="id4">About WebOb</a></li>
+<li><a class="reference internal" href="#serving-your-application" id="id5">Serving Your Application</a></li>
+<li><a class="reference internal" href="#making-a-framework" id="id6">Making A Framework</a></li>
+<li><a class="reference internal" href="#routing" id="id7">Routing</a><ul>
+<li><a class="reference internal" href="#routing-templates" id="id8">Routing: Templates</a></li>
+<li><a class="reference internal" href="#routing-controller-loading" id="id9">Routing: controller loading</a></li>
+<li><a class="reference internal" href="#routing-putting-it-together" id="id10">Routing: putting it together</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#controllers" id="id11">Controllers</a></li>
+<li><a class="reference internal" href="#putting-it-together" id="id12">Putting It Together</a></li>
+<li><a class="reference internal" href="#another-controller" id="id13">Another Controller</a></li>
+<li><a class="reference internal" href="#url-generation-and-request-access" id="id14">URL Generation and Request Access</a></li>
+<li><a class="reference internal" href="#templating" id="id15">Templating</a></li>
+<li><a class="reference internal" href="#conclusion" id="id16">Conclusion</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="introduction-and-audience">
+<h2><a class="toc-backref" href="#id2">Introduction and Audience</a><a class="headerlink" href="#introduction-and-audience" title="Permalink to this headline">¶</a></h2>
+<p>It&#8217;s been over two years since I wrote the <a class="reference external" href="http://pythonpaste.org/do-it-yourself-framework.html">first version of this tutorial</a>.  I decided to give it another run with some of the tools that have come about since then (particularly <a class="reference external" href="http://pythonpaste.org/webob/">WebOb</a>).</p>
+<p>Sometimes Python is accused of having too many web frameworks.  And it&#8217;s true, there are a lot.  That said, I think writing a framework is a useful exercise.  It doesn&#8217;t let you skip over too much without understanding it.  It removes the magic.  So even if you go on to use another existing framework (which I&#8217;d probably advise you do), you&#8217;ll be able to understand it better if you&#8217;ve written something like it on your own.</p>
+<p>This tutorial shows you how to create a web framework of your own, using WSGI and WebOb.  No other libraries will be used.</p>
+<p>For the longer sections I will try to explain any tricky parts on a line-by line basis following the example.</p>
+</div>
+<div class="section" id="what-is-wsgi">
+<h2><a class="toc-backref" href="#id3">What Is WSGI?</a><a class="headerlink" href="#what-is-wsgi" title="Permalink to this headline">¶</a></h2>
+<p>At its simplest WSGI is an interface between web servers and web applications.  We&#8217;ll explain the mechanics of WSGI below, but a higher level view is to say that WSGI lets code pass around web requests in a fairly formal way.  That&#8217;s the simplest summary, but there is more &#8211; WSGI lets you add annotation to the request, and adds some more metadata to the request.</p>
+<p>WSGI more specifically is made up of an <em>application</em> and a <em>server</em>.  The application is a function that receives the request and produces the response.  The server is the thing that calls the application function.</p>
+<p>A very simple application looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">application</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="p">[(</span><span class="s">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="s">&#39;text/html&#39;</span><span class="p">)])</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="p">[</span><span class="s">&#39;Hello World!&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">environ</span></tt> argument is a dictionary with values like the environment in a CGI request.  The header <tt class="docutils literal"><span class="pre">Host:</span></tt>, for instance, goes in <tt class="docutils literal"><span class="pre">environ['HTTP_HOST']</span></tt>.  The path is in <tt class="docutils literal"><span class="pre">environ['SCRIPT_NAME']</span></tt> (which is the path leading <em>up to</em> the application), and <tt class="docutils literal"><span class="pre">environ['PATH_INFO']</span></tt> (the remaining path that the application should interpret).</p>
+<p>We won&#8217;t focus much on the server, but we will use WebOb to handle the application.  WebOb in a way has a simple server interface.  To use it you create a new request with <tt class="docutils literal"><span class="pre">req</span> <span class="pre">=</span> <span class="pre">webob.Request('http://localhost/test')</span></tt>, and then call the application with <tt class="docutils literal"><span class="pre">resp</span> <span class="pre">=</span> <span class="pre">req.get_response(app)</span></tt>.  For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">Request</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;http://localhost/test&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">resp</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">application</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">resp</span>
+<span class="go">200 OK</span>
+<span class="go">Content-Type: text/html</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">Hello World!</span>
+</pre></div>
+</div>
+<p>This is an easy way to test applications, and we&#8217;ll use it to test the framework we&#8217;re creating.</p>
+</div>
+<div class="section" id="about-webob">
+<h2><a class="toc-backref" href="#id4">About WebOb</a><a class="headerlink" href="#about-webob" title="Permalink to this headline">¶</a></h2>
+<p>WebOb is a library to create a request and response object.  It&#8217;s centered around the WSGI model.  Requests are wrappers around the environment.  For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;http://localhost/test&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;HTTP_HOST&#39;</span><span class="p">]</span>
+<span class="go">&#39;localhost:80&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req</span><span class="o">.</span><span class="n">host</span>
+<span class="go">&#39;localhost:80&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req</span><span class="o">.</span><span class="n">path_info</span>
+<span class="go">&#39;/test&#39;</span>
+</pre></div>
+</div>
+<p>Responses are objects that represent the... well, response.  The status, headers, and body:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">Response</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">resp</span> <span class="o">=</span> <span class="n">Response</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="s">&#39;Hello World!&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">resp</span><span class="o">.</span><span class="n">content_type</span>
+<span class="go">&#39;text/html&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">resp</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s">&#39;text/plain&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">resp</span>
+<span class="go">200 OK</span>
+<span class="go">Content-Length: 12</span>
+<span class="go">Content-Type: text/plain; charset=UTF-8</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">Hello World!</span>
+</pre></div>
+</div>
+<p>Responses also happen to be WSGI applications.  That means you can call <tt class="docutils literal"><span class="pre">resp(environ,</span> <span class="pre">start_response)</span></tt>.  Of course it&#8217;s much less <em>dynamic</em> than a normal WSGI application.</p>
+<p>These two pieces solve a lot of the more tedious parts of making a framework.  They deal with parsing most HTTP headers, generating valid responses, and a number of unicode issues.</p>
+</div>
+<div class="section" id="serving-your-application">
+<h2><a class="toc-backref" href="#id5">Serving Your Application</a><a class="headerlink" href="#serving-your-application" title="Permalink to this headline">¶</a></h2>
+<p>While we can test the application using WebOb, you might want to serve the application.  Here&#8217;s the basic recipe, using the <a class="reference external" href="http://pythonpaste.org">Paste</a> HTTP server:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">paste</span> <span class="kn">import</span> <span class="n">httpserver</span>
+    <span class="n">httpserver</span><span class="o">.</span><span class="n">serve</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mf">8080</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>you could also use <a class="reference external" href="http://python.org/doc/current/lib/module-wsgiref.simpleserver.html">wsgiref</a> from the standard library, but this is mostly appropriate for testing as it is single-threaded:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">wsgiref.simple_server</span> <span class="kn">import</span> <span class="n">make_server</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">make_server</span><span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mf">8080</span><span class="p">,</span> <span class="n">app</span><span class="p">)</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="making-a-framework">
+<h2><a class="toc-backref" href="#id6">Making A Framework</a><a class="headerlink" href="#making-a-framework" title="Permalink to this headline">¶</a></h2>
+<p>Well, now we need to start work on our framework.</p>
+<p>Here&#8217;s the basic model we&#8217;ll be creating:</p>
+<ul class="simple">
+<li>We&#8217;ll define routes that point to controllers</li>
+<li>We&#8217;ll create a simple framework for creating controllers</li>
+</ul>
+</div>
+<div class="section" id="routing">
+<h2><a class="toc-backref" href="#id7">Routing</a><a class="headerlink" href="#routing" title="Permalink to this headline">¶</a></h2>
+<p>We&#8217;ll use explicit routes using URI templates (minus the domains) to match paths.  We&#8217;ll add a little extension that you can use <tt class="docutils literal"><span class="pre">{name:regular</span> <span class="pre">expression}</span></tt>, where the named segment must then match that regular expression.  The matches will include a &#8220;controller&#8221; variable, which will be a string like &#8220;module_name:function_name&#8221;.  For our examples we&#8217;ll use a simple blog.</p>
+<p>So here&#8217;s what a route would look like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">app</span> <span class="o">=</span> <span class="n">Router</span><span class="p">()</span>
+<span class="n">app</span><span class="o">.</span><span class="n">add_route</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">controller</span><span class="o">=</span><span class="s">&#39;controllers:index&#39;</span><span class="p">)</span>
+<span class="n">app</span><span class="o">.</span><span class="n">add_route</span><span class="p">(</span><span class="s">&#39;/{year:\d\d\d\d}/&#39;</span><span class="p">,</span>
+              <span class="n">controller</span><span class="o">=</span><span class="s">&#39;controllers:archive&#39;</span><span class="p">)</span>
+<span class="n">app</span><span class="o">.</span><span class="n">add_route</span><span class="p">(</span><span class="s">&#39;/{year:\d\d\d\d}/{month:\d\d}/&#39;</span><span class="p">,</span>
+              <span class="n">controller</span><span class="o">=</span><span class="s">&#39;controllers:archive&#39;</span><span class="p">)</span>
+<span class="n">app</span><span class="o">.</span><span class="n">add_route</span><span class="p">(</span><span class="s">&#39;/{year:\d\d\d\d}/{month:\d\d}/{slug}&#39;</span><span class="p">,</span>
+              <span class="n">controller</span><span class="o">=</span><span class="s">&#39;controllers:view&#39;</span><span class="p">)</span>
+<span class="n">app</span><span class="o">.</span><span class="n">add_route</span><span class="p">(</span><span class="s">&#39;/post&#39;</span><span class="p">,</span> <span class="n">controller</span><span class="o">=</span><span class="s">&#39;controllers:post&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To do this we&#8217;ll need a couple pieces:</p>
+<ul class="simple">
+<li>Something to match those URI template things.</li>
+<li>Something to load the controller</li>
+<li>The object to patch them together (<tt class="docutils literal"><span class="pre">Router</span></tt>)</li>
+</ul>
+<div class="section" id="routing-templates">
+<h3><a class="toc-backref" href="#id8">Routing: Templates</a><a class="headerlink" href="#routing-templates" title="Permalink to this headline">¶</a></h3>
+<p>To do the matching, we&#8217;ll compile those templates to regular expressions.</p>
+<div class="highlight-python"><pre> &gt;&gt;&gt; import re
+ &gt;&gt;&gt; var_regex = re.compile(r'''
+ ...     \{          # The exact character "{"
+ ...     (\w+)       # The variable name (restricted to a-z, 0-9, _)
+ ...     (?::([^}]+))? # The optional :regex part
+ ...     \}          # The exact character "}"
+ ...     ''', re.VERBOSE)
+ &gt;&gt;&gt; def template_to_regex(template):
+ ...     regex = ''
+ ...     last_pos = 0
+ ...     for match in var_regex.finditer(template):
+ ...         regex += re.escape(template[last_pos:match.start()])
+ ...         var_name = match.group(1)
+ ...         expr = match.group(2) or '[^/]+'
+ ...         expr = '(?P&lt;%s&gt;%s)' % (var_name, expr)
+ ...         regex += expr
+ ...         last_pos = match.end()
+ ...     regex += re.escape(template[last_pos:])
+ ...     regex = '^%s$' % regex
+ ...     return regex</pre>
+</div>
+<p><strong>line 2:</strong> Here we create the regular expression.  The <tt class="docutils literal"><span class="pre">re.VERBOSE</span></tt> flag makes the regular expression parser ignore whitespace and allow comments, so we can avoid some of the feel of line-noise.  This matches any variables, i.e., <tt class="docutils literal"><span class="pre">{var:regex}</span></tt> (where <tt class="docutils literal"><span class="pre">:regex</span></tt> is optional).  Note that there are two groups we capture: <tt class="docutils literal"><span class="pre">match.group(1)</span></tt> will be the variable name, and <tt class="docutils literal"><span class="pre">match.group(2)</span></tt> will be the regular expression (or None when there is no regular expression).  Note that <tt class="docutils literal"><span class="pre">(?:...)?</span></tt> means that the section is optional.</p>
+<p><strong>line 10</strong>: This variable will hold the regular expression that we are creating.</p>
+<p><strong>line 11</strong>: This contains the position of the end of the last match.</p>
+<p><strong>line 12</strong>: The <tt class="docutils literal"><span class="pre">finditer</span></tt> method yields all the matches.</p>
+<p><strong>line 13</strong>: We&#8217;re getting all the non-<tt class="docutils literal"><span class="pre">{}</span></tt> text from after the last match, up to the beginning of this match.  We call <tt class="docutils literal"><span class="pre">re.escape</span></tt> on that text, which escapes any characters that have special meaning.  So <tt class="docutils literal"><span class="pre">.html</span></tt> will be escaped as <tt class="docutils literal"><span class="pre">\.html</span></tt>.</p>
+<p><strong>line 14</strong>: The first match is the variable name.</p>
+<p><strong>line 15</strong>: <tt class="docutils literal"><span class="pre">expr</span></tt> is the regular expression we&#8217;ll match against, the optional second match.  The default is <tt class="docutils literal"><span class="pre">[^/]+</span></tt>, which matches any non-empty, non-/ string.  Which seems like a reasonable default to me.</p>
+<p><strong>line 16</strong>: Here we create the actual regular expression.  <tt class="docutils literal"><span class="pre">(?P&lt;name&gt;...)</span></tt> is a grouped expression that is named.  When you get a match, you can look at <tt class="docutils literal"><span class="pre">match.groupdict()</span></tt> and get the names and values.</p>
+<p><strong>line 17, 18</strong>: We add the expression on to the complete regular expression and save the last position.</p>
+<p><strong>line 19</strong>: We add remaining non-variable text to the regular expression.</p>
+<p><strong>line 20</strong>: And then we make the regular expression match the complete string (<tt class="docutils literal"><span class="pre">^</span></tt> to force it to match from the start, <tt class="docutils literal"><span class="pre">$</span></tt> to make sure it matches up to the end).</p>
+<p>To test it we can try some translations.  You could put these directly in the docstring of the <tt class="docutils literal"><span class="pre">template_to_regex</span></tt> function and use <a class="reference external" href="http://python.org/doc/current/lib/module-doctest.html">doctest</a> to test that.  But I&#8217;m using doctest to test <em>this</em> document, so I can&#8217;t put a docstring doctest inside the doctest itself.  Anyway, here&#8217;s what a test looks like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">template_to_regex</span><span class="p">(</span><span class="s">&#39;/a/static/path&#39;</span><span class="p">)</span>
+<span class="go">^\/a\/static\/path$</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">template_to_regex</span><span class="p">(</span><span class="s">&#39;/{year:\d\d\d\d}/{month:\d\d}/{slug}&#39;</span><span class="p">)</span>
+<span class="go">^\/(?P&lt;year&gt;\d\d\d\d)\/(?P&lt;month&gt;\d\d)\/(?P&lt;slug&gt;[^/]+)$</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="routing-controller-loading">
+<h3><a class="toc-backref" href="#id9">Routing: controller loading</a><a class="headerlink" href="#routing-controller-loading" title="Permalink to this headline">¶</a></h3>
+<p>To load controllers we have to import the module, then get the function out of it.  We&#8217;ll use the <tt class="docutils literal"><span class="pre">__import__</span></tt> builtin to import the module.  The return value of <tt class="docutils literal"><span class="pre">__import__</span></tt> isn&#8217;t very useful, but it puts the module into <tt class="docutils literal"><span class="pre">sys.modules</span></tt>, a dictionary of all the loaded modules.</p>
+<p>Also, some people don&#8217;t know how exactly the string method <tt class="docutils literal"><span class="pre">split</span></tt> works.  It takes two arguments &#8211; the first is the character to split on, and the second is the maximum number of splits to do.  We want to split on just the first <tt class="docutils literal"><span class="pre">:</span></tt> character, so we&#8217;ll use a maximum number of splits of 1.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">load_controller</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">module_name</span><span class="p">,</span> <span class="n">func_name</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">,</span> <span class="mf">1</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="nb">__import__</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">module</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span>
+<span class="gp">... </span>    <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">func_name</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">func</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="routing-putting-it-together">
+<h3><a class="toc-backref" href="#id10">Routing: putting it together</a><a class="headerlink" href="#routing-putting-it-together" title="Permalink to this headline">¶</a></h3>
+<p>Now, the <tt class="docutils literal"><span class="pre">Router</span></tt> class.  The class has the <tt class="docutils literal"><span class="pre">add_route</span></tt> method, and also a <tt class="docutils literal"><span class="pre">__call__</span></tt> method.  That <tt class="docutils literal"><span class="pre">__call__</span></tt> method makes the Router object itself a WSGI application.  So when a request comes in, it looks at <tt class="docutils literal"><span class="pre">PATH_INFO</span></tt> (also known as <tt class="docutils literal"><span class="pre">req.path_info</span></tt>) and hands off the request to the controller that matches that path.</p>
+<div class="highlight-python"><pre> &gt;&gt;&gt; from webob import Request
+ &gt;&gt;&gt; from webob import exc
+ &gt;&gt;&gt; class Router(object):
+ ...     def __init__(self):
+ ...         self.routes = []
+ ...
+ ...     def add_route(self, template, controller, **vars):
+ ...         if isinstance(controller, basestring):
+ ...             controller = load_controller(controller)
+ ...         self.routes.append((re.compile(template_to_regex(template)),
+ ...                             controller,
+ ...                             vars))
+ ...
+ ...     def __call__(self, environ, start_response):
+ ...         req = Request(environ)
+ ...         for regex, controller, vars in self.routes:
+ ...             match = regex.match(req.path_info)
+ ...             if match:
+ ...                 req.urlvars = match.groupdict()
+ ...                 req.urlvars.update(vars)
+ ...                 return controller(environ, start_response)
+ ...         return exc.HTTPNotFound()(environ, start_response)</pre>
+</div>
+<p><strong>line 5</strong>: We are going to keep the route options in an ordered list.  Each item will be <tt class="docutils literal"><span class="pre">(regex,</span> <span class="pre">controller,</span> <span class="pre">vars)</span></tt>: <tt class="docutils literal"><span class="pre">regex</span></tt> is the regular expression object to match against, <tt class="docutils literal"><span class="pre">controller</span></tt> is the controller to run, and <tt class="docutils literal"><span class="pre">vars</span></tt> are any extra (constant) variables.</p>
+<p><strong>line 8, 9</strong>: We will allow you to call <tt class="docutils literal"><span class="pre">add_route</span></tt> with a string (that will be imported) or a controller object.  We test for a string here, and then import it if necessary.</p>
+<p><strong>line 13</strong>: Here we add a <tt class="docutils literal"><span class="pre">__call__</span></tt> method.  This is the method used when you call an object like a function.  You should recognize this as the WSGI signature.</p>
+<p><strong>line 14</strong>: We create a request object.  Note we&#8217;ll only use this request object in this function; if the controller wants a request object it&#8217;ll have to make on of its own.</p>
+<p><strong>line 16</strong>: We test the regular expression against <tt class="docutils literal"><span class="pre">req.path_info</span></tt>.  This is the same as <tt class="docutils literal"><span class="pre">environ['PATH_INFO']</span></tt>.  That&#8217;s all the request path left to be processed.</p>
+<p><strong>line 18</strong>: We set <tt class="docutils literal"><span class="pre">req.urlvars</span></tt> to the dictionary of matches in the regular expression.  This variable actually maps to <tt class="docutils literal"><span class="pre">environ['wsgiorg.routing_args']</span></tt>.  Any attributes you set on a request will, in one way or another, map to the environment dictionary: the request holds no state of its own.</p>
+<p><strong>line 19</strong>: We also add in any explicit variables passed in through <tt class="docutils literal"><span class="pre">add_route()</span></tt>.</p>
+<p><strong>line 20</strong>: Then we call the controller as a WSGI application itself.  Any fancy framework stuff the controller wants to do, it&#8217;ll have to do itself.</p>
+<p><strong>line 21</strong>: If nothing matches, we return a 404 Not Found response.  <tt class="docutils literal"><span class="pre">webob.exc.HTTPNotFound()</span></tt> is a WSGI application that returns 404 responses.  You could add a message too, like <tt class="docutils literal"><span class="pre">webob.exc.HTTPNotFound('No</span> <span class="pre">route</span> <span class="pre">matched')</span></tt>.  Then, of course, we call the application.</p>
+</div>
+</div>
+<div class="section" id="controllers">
+<h2><a class="toc-backref" href="#id11">Controllers</a><a class="headerlink" href="#controllers" title="Permalink to this headline">¶</a></h2>
+<p>The router just passes the request on to the controller, so the controllers are themselves just WSGI applications.  But we&#8217;ll want to set up something to make those applications friendlier to write.</p>
+<p>To do that we&#8217;ll write a <a class="reference external" href="http://www.ddj.com/web-development/184406073">decorator</a>.  A decorator is a function that wraps another function.  After decoration the function will be a WSGI application, but it will be decorating a function with a signature like <tt class="docutils literal"><span class="pre">controller_func(req,</span> <span class="pre">**urlvars)</span></tt>.  The controller function will return a response object (which, remember, is a WSGI application on its own).</p>
+<div class="highlight-python"><pre> &gt;&gt;&gt; from webob import Request, Response
+ &gt;&gt;&gt; from webob import exc
+ &gt;&gt;&gt; def controller(func):
+ ...     def replacement(environ, start_response):
+ ...         req = Request(environ)
+ ...         try:
+ ...             resp = func(req, **req.urlvars)
+ ...         except exc.HTTPException, e:
+ ...             resp = e
+ ...         if isinstance(resp, basestring):
+ ...             resp = Response(body=resp)
+ ...         return resp(environ, start_response)
+ ...     return replacement</pre>
+</div>
+<p><strong>line 3</strong>: This is the typical signature for a decorator &#8211; it takes one function as an argument, and returns a wrapped function.</p>
+<p><strong>line 4</strong>: This is the replacement function we&#8217;ll return.  This is called a <a class="reference external" href="http://en.wikipedia.org/wiki/Closure_(computer_science)">closure</a> &#8211; this function will have access to <tt class="docutils literal"><span class="pre">func</span></tt>, and everytime you decorate a new function there will be a new <tt class="docutils literal"><span class="pre">replacement</span></tt> function with its own value of <tt class="docutils literal"><span class="pre">func</span></tt>.  As you can see, this is a WSGI application.</p>
+<p><strong>line 5</strong>: We create a request.</p>
+<p><strong>line 6</strong>: Here we catch any <tt class="docutils literal"><span class="pre">webob.exc.HTTPException</span></tt> exceptions.  This is so you can do <tt class="docutils literal"><span class="pre">raise</span> <span class="pre">webob.exc.HTTPNotFound()</span></tt> in your function (or on Python 2.4, <tt class="docutils literal"><span class="pre">raise</span> <span class="pre">webob.exc.HTTPNotFound().exception</span></tt>).  These exceptions are themselves WSGI applications.</p>
+<p><strong>line 7</strong>: We call the function with the request object, any any variables in <tt class="docutils literal"><span class="pre">req.urlvars</span></tt>.  And we get back a response.</p>
+<p><strong>line 10</strong>: We&#8217;ll allow the function to return a full response object, or just a string.  If they return a string, we&#8217;ll create a <tt class="docutils literal"><span class="pre">Response</span></tt> object with that (and with the standard <tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt> status, <tt class="docutils literal"><span class="pre">text/html</span></tt> content type, and <tt class="docutils literal"><span class="pre">utf8</span></tt> charset/encoding).</p>
+<p><strong>line 12</strong>: We pass the request on to the response.  Which <em>also</em> happens to be a WSGI application.  WSGI applications are falling from the sky!</p>
+<p><strong>line 13</strong>: We return the function object itself, which will take the place of the function.</p>
+<p>You use this controller like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@controller</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">req</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="s">&#39;This is the index&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="putting-it-together">
+<h2><a class="toc-backref" href="#id12">Putting It Together</a><a class="headerlink" href="#putting-it-together" title="Permalink to this headline">¶</a></h2>
+<p>Now we&#8217;ll show a basic application.  Just a hello world application for now.  Note that this document is the module <tt class="docutils literal"><span class="pre">__main__</span></tt>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nd">@controller</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">req</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="n">req</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">&#39;POST&#39;</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="s">&#39;Hello </span><span class="si">%s</span><span class="s">!&#39;</span> <span class="o">%</span> <span class="n">req</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span>
+<span class="gp">... </span>    <span class="k">elif</span> <span class="n">req</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">&#39;GET&#39;</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="s">&#39;&#39;&#39;&lt;form method=&quot;POST&quot;&gt;</span>
+<span class="gp">... </span><span class="s">            You&#39;re name: &lt;input type=&quot;text&quot; name=&quot;name&quot;&gt;</span>
+<span class="gp">... </span><span class="s">            &lt;input type=&quot;submit&quot;&gt;</span>
+<span class="gp">... </span><span class="s">            &lt;/form&gt;&#39;&#39;&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">hello_world</span> <span class="o">=</span> <span class="n">Router</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">hello_world</span><span class="o">.</span><span class="n">add_route</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">controller</span><span class="o">=</span><span class="n">hello</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now let&#8217;s test that application:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">resp</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">hello_world</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">resp</span>
+<span class="go">200 OK</span>
+<span class="go">Content-Type: text/html; charset=UTF-8</span>
+<span class="go">Content-Length: 131</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">&lt;form method=&quot;POST&quot;&gt;</span>
+<span class="go">            You&#39;re name: &lt;input type=&quot;text&quot; name=&quot;name&quot;&gt;</span>
+<span class="go">            &lt;input type=&quot;submit&quot;&gt;</span>
+<span class="go">            &lt;/form&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s">&#39;POST&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="s">&#39;name=Ian&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">resp</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">hello_world</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">resp</span>
+<span class="go">200 OK</span>
+<span class="go">Content-Type: text/html; charset=UTF-8</span>
+<span class="go">Content-Length: 10</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">Hello Ian!</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="another-controller">
+<h2><a class="toc-backref" href="#id13">Another Controller</a><a class="headerlink" href="#another-controller" title="Permalink to this headline">¶</a></h2>
+<p>There&#8217;s another pattern that might be interesting to try for a controller.  Instead of a function, we can make a class with methods like <tt class="docutils literal"><span class="pre">get</span></tt>, <tt class="docutils literal"><span class="pre">post</span></tt>, etc.  The <tt class="docutils literal"><span class="pre">urlvars</span></tt> will be used to instantiate the class.</p>
+<p>We could do this as a superclass, but the implementation will be more elegant as a wrapper, like the decorator is a wrapper.  Python 3.0 will add <a class="reference external" href="http://www.python.org/dev/peps/pep-3129/">class decorators</a> which will work like this.</p>
+<p>We&#8217;ll allow an extra <tt class="docutils literal"><span class="pre">action</span></tt> variable, which will define the method (actually <tt class="docutils literal"><span class="pre">action_method</span></tt>, where <tt class="docutils literal"><span class="pre">_method</span></tt> is the request method).  If no action is given, we&#8217;ll use just the method (i.e., <tt class="docutils literal"><span class="pre">get</span></tt>, <tt class="docutils literal"><span class="pre">post</span></tt>, etc).</p>
+<div class="highlight-python"><pre> &gt;&gt;&gt; def rest_controller(cls):
+ ...     def replacement(environ, start_response):
+ ...         req = Request(environ)
+ ...         try:
+ ...             instance = cls(req, **req.urlvars)
+ ...             action = req.urlvars.get('action')
+ ...             if action:
+ ...                 action += '_' + req.method.lower()
+ ...             else:
+ ...                 action = req.method.lower()
+ ...             try:
+ ...                 method = getattr(instance, action)
+ ...             except AttributeError:
+ ...                 raise exc.HTTPNotFound("No action %s" % action)
+ ...             resp = method()
+ ...             if isinstance(resp, basestring):
+ ...                 resp = Response(body=resp)
+ ...         except exc.HTTPException, e:
+ ...             resp = e
+ ...         return resp(environ, start_response)
+ ...     return replacement</pre>
+</div>
+<p><strong>line 1</strong>: Here we&#8217;re kind of decorating a class.  But really we&#8217;ll just create a WSGI application wrapper.</p>
+<p><strong>line 2-4</strong>: The replacement WSGI application, also a closure.  And we create a request and catch exceptions, just like in the decorator.</p>
+<p><strong>line 5</strong>: We instantiate the class with both the request and <tt class="docutils literal"><span class="pre">req.urlvars</span></tt> to initialize it.  The instance will only be used for one request.  (Note that the <em>instance</em> then doesn&#8217;t have to be thread safe.)</p>
+<p><strong>line 6</strong>: We get the action variable out, if there is one.</p>
+<p><strong>line 7, 8</strong>: If there was one, we&#8217;ll use the method name <tt class="docutils literal"><span class="pre">{action}_{method}</span></tt>...</p>
+<p><strong>line 8, 9</strong>: ... otherwise we&#8217;ll use just the method for the method name.</p>
+<p><strong>line 10-13</strong>: We&#8217;ll get the method from the instance, or respond with a 404 error if there is not such method.</p>
+<p><strong>line 14</strong>: Call the method, get the response</p>
+<p><strong>line 15, 16</strong>: If the response is just a string, create a full response object from it.</p>
+<p><strong>line 19</strong>: and then we forward the request...</p>
+<p><strong>line 20</strong>: ... and return the wrapper object we&#8217;ve created.</p>
+<p>Here&#8217;s the hello world:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Hello</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="o">=</span> <span class="n">req</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="s">&#39;&#39;&#39;&lt;form method=&quot;POST&quot;&gt;</span>
+<span class="gp">... </span><span class="s">            You&#39;re name: &lt;input type=&quot;text&quot; name=&quot;name&quot;&gt;</span>
+<span class="gp">... </span><span class="s">            &lt;input type=&quot;submit&quot;&gt;</span>
+<span class="gp">... </span><span class="s">            &lt;/form&gt;&#39;&#39;&#39;</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="s">&#39;Hello </span><span class="si">%s</span><span class="s">!&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">hello</span> <span class="o">=</span> <span class="n">rest_controller</span><span class="p">(</span><span class="n">Hello</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We&#8217;ll run the same test as before:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">hello_world</span> <span class="o">=</span> <span class="n">Router</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">hello_world</span><span class="o">.</span><span class="n">add_route</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">controller</span><span class="o">=</span><span class="n">hello</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">resp</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">hello_world</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">resp</span>
+<span class="go">200 OK</span>
+<span class="go">Content-Type: text/html; charset=UTF-8</span>
+<span class="go">Content-Length: 131</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">&lt;form method=&quot;POST&quot;&gt;</span>
+<span class="go">            You&#39;re name: &lt;input type=&quot;text&quot; name=&quot;name&quot;&gt;</span>
+<span class="go">            &lt;input type=&quot;submit&quot;&gt;</span>
+<span class="go">            &lt;/form&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s">&#39;POST&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="s">&#39;name=Ian&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">resp</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">hello_world</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">resp</span>
+<span class="go">200 OK</span>
+<span class="go">Content-Type: text/html; charset=UTF-8</span>
+<span class="go">Content-Length: 10</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">Hello Ian!</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="url-generation-and-request-access">
+<h2><a class="toc-backref" href="#id14">URL Generation and Request Access</a><a class="headerlink" href="#url-generation-and-request-access" title="Permalink to this headline">¶</a></h2>
+<p>You can use hard-coded links in your HTML, but this can have problems.  Relative links are hard to manage, and absolute links presume that your application lives at a particular location.  WSGI gives a variable <tt class="docutils literal"><span class="pre">SCRIPT_NAME</span></tt>, which is the portion of the path that led up to this application.  If you are writing a blog application, for instance, someone might want to install it at <tt class="docutils literal"><span class="pre">/blog/</span></tt>, and then SCRIPT_NAME would be <tt class="docutils literal"><span class="pre">&quot;/blog&quot;</span></tt>.  We should generate links with that in mind.</p>
+<p>The base URL using SCRIPT_NAME is <tt class="docutils literal"><span class="pre">req.application_url</span></tt>.  So, if we have access to the request we can make a URL.  But what if we don&#8217;t have access?</p>
+<p>We can use thread-local variables to make it easy for any function to get access to the currect request.  A &#8220;thread-local&#8221; variable is a variable whose value is tracked separately for each thread, so if there are multiple requests in different threads, their requests won&#8217;t clobber each other.</p>
+<p>The basic means of using a thread-local variable is <tt class="docutils literal"><span class="pre">threading.local()</span></tt>.  This creates a blank object that can have thread-local attributes assigned to it.  I find the best way to get <em>at</em> a thread-local value is with a function, as this makes it clear that you are fetching the object, as opposed to getting at some global object.</p>
+<p>Here&#8217;s the basic structure for the local:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">threading</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Localized</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">local</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">object</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">object</span> <span class="o">=</span> <span class="nb">object</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">unregister</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">object</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">try</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">object</span>
+<span class="gp">... </span>        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;No object has been registered for this thread&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">get_request</span> <span class="o">=</span> <span class="n">Localized</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Now we need some <em>middleware</em> to register the request object.  Middleware is something that wraps an application, possibly modifying the request on the way in or the way out.  In a sense the <tt class="docutils literal"><span class="pre">Router</span></tt> object was middleware, though not exactly because it didn&#8217;t wrap a single application.</p>
+<p>This registration middleware looks like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">RegisterRequest</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="n">get_request</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="k">try</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="k">finally</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="n">get_request</span><span class="o">.</span><span class="n">unregister</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Now if we do:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">hello_world</span> <span class="o">=</span> <span class="n">RegisterRequest</span><span class="p">(</span><span class="n">hello_world</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>then the request will be registered each time.  Now, lets create a URL generation function:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">urllib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">,</span> <span class="o">**</span><span class="nb">vars</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">base_url</span> <span class="o">=</span> <span class="n">get_request</span><span class="p">()</span><span class="o">.</span><span class="n">application_url</span>
+<span class="gp">... </span>    <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">path</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="nb">vars</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="n">path</span> <span class="o">+=</span> <span class="s">&#39;?&#39;</span> <span class="o">+</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">base_url</span> <span class="o">+</span> <span class="n">path</span>
+</pre></div>
+</div>
+<p>Now, to test:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">get_request</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;http://localhost/&#39;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">url</span><span class="p">(</span><span class="s">&#39;article&#39;</span><span class="p">,</span> <span class="mf">1</span><span class="p">)</span>
+<span class="go">&#39;http://localhost/article/1&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">url</span><span class="p">(</span><span class="s">&#39;search&#39;</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="s">&#39;some query&#39;</span><span class="p">)</span>
+<span class="go">&#39;http://localhost/search?q=some+query&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="templating">
+<h2><a class="toc-backref" href="#id15">Templating</a><a class="headerlink" href="#templating" title="Permalink to this headline">¶</a></h2>
+<p>Well, we don&#8217;t <em>really</em> need to factor templating into our framework.  After all, you return a string from your controller, and you can figure out on your own how to get a rendered string from a template.</p>
+<p>But we&#8217;ll add a little helper, because I think it shows a clever trick.</p>
+<p>We&#8217;ll use <a class="reference external" href="http://pythonpaste.org/tempita/">Tempita</a> for templating, mostly because it&#8217;s very simplistic about how it does loading.  The basic form is:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">tempita</span>
+<span class="n">template</span> <span class="o">=</span> <span class="n">tempita</span><span class="o">.</span><span class="n">HTMLTemplate</span><span class="o">.</span><span class="n">from_filename</span><span class="p">(</span><span class="s">&#39;some-file.html&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>But we&#8217;ll be implementing a function <tt class="docutils literal"><span class="pre">render(template_name,</span> <span class="pre">**vars)</span></tt> that will render the named template, treating it as a path <em>relative to the location of the render() call</em>.  That&#8217;s the trick.</p>
+<p>To do that we use <tt class="docutils literal"><span class="pre">sys._getframe</span></tt>, which is a way to look at information in the calling scope.  Generally this is frowned upon, but I think this case is justifiable.</p>
+<p>We&#8217;ll also let you pass an instantiated template in instead of a template name, which will be useful in places like a doctest where there aren&#8217;t other files easily accessible.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">os</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tempita</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="o">**</span><span class="nb">vars</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">caller_location</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">(</span><span class="mf">1</span><span class="p">)</span><span class="o">.</span><span class="n">f_globals</span><span class="p">[</span><span class="s">&#39;__file__&#39;</span><span class="p">]</span>
+<span class="gp">... </span>        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">caller_location</span><span class="p">),</span> <span class="n">template</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="n">template</span> <span class="o">=</span> <span class="n">tempita</span><span class="o">.</span><span class="n">HTMLTemplate</span><span class="o">.</span><span class="n">from_filename</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="nb">vars</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s">&#39;request&#39;</span><span class="p">,</span> <span class="n">get_request</span><span class="p">())</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">template</span><span class="o">.</span><span class="n">substitute</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="conclusion">
+<h2><a class="toc-backref" href="#id16">Conclusion</a><a class="headerlink" href="#conclusion" title="Permalink to this headline">¶</a></h2>
+<p>Well, that&#8217;s a framework.  Ta-da!</p>
+<p>Of course, this doesn&#8217;t deal with some other stuff.  In particular:</p>
+<ul class="simple">
+<li>Configuration</li>
+<li>Making your routes debuggable</li>
+<li>Exception catching and other basic infrastructure</li>
+<li>Database connections</li>
+<li>Form handling</li>
+<li>Authentication</li>
+</ul>
+<p>But, for now, that&#8217;s outside the scope of this document.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Another Do-It-Yourself Framework</a><ul>
+<li><a class="reference external" href="#introduction-and-audience">Introduction and Audience</a></li>
+<li><a class="reference external" href="#what-is-wsgi">What Is WSGI?</a></li>
+<li><a class="reference external" href="#about-webob">About WebOb</a></li>
+<li><a class="reference external" href="#serving-your-application">Serving Your Application</a></li>
+<li><a class="reference external" href="#making-a-framework">Making A Framework</a></li>
+<li><a class="reference external" href="#routing">Routing</a><ul>
+<li><a class="reference external" href="#routing-templates">Routing: Templates</a></li>
+<li><a class="reference external" href="#routing-controller-loading">Routing: controller loading</a></li>
+<li><a class="reference external" href="#routing-putting-it-together">Routing: putting it together</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#controllers">Controllers</a></li>
+<li><a class="reference external" href="#putting-it-together">Putting It Together</a></li>
+<li><a class="reference external" href="#another-controller">Another Controller</a></li>
+<li><a class="reference external" href="#url-generation-and-request-access">URL Generation and Request Access</a></li>
+<li><a class="reference external" href="#templating">Templating</a></li>
+<li><a class="reference external" href="#conclusion">Conclusion</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="jsonrpc-example.html"
+                                  title="previous chapter">JSON-RPC Example</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="news.html"
+                                  title="next chapter">News</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/do-it-yourself.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="news.html" title="News"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="jsonrpc-example.html" title="JSON-RPC Example"
+             >previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2008, Ian Bicking.
+      Last updated on Feb 03, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

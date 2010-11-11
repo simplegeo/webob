@@ -1,0 +1,298 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>WebOb File-Serving Example &mdash; WebOb v0.9.8 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.9.8',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="WebOb v0.9.8 documentation" href="index.html" />
+    <link rel="next" title="Wiki Example" href="wiki-example.html" />
+    <link rel="prev" title="Differences Between WebOb and Other Systems" href="differences.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="wiki-example.html" title="Wiki Example"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="differences.html" title="Differences Between WebOb and Other Systems"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="webob-file-serving-example">
+<h1>WebOb File-Serving Example<a class="headerlink" href="#webob-file-serving-example" title="Permalink to this headline">¶</a></h1>
+<p>This document shows how you can make a static-file-serving application
+using WebOb.  We&#8217;ll quickly build this up from minimal functionality
+to a high-quality file serving application.</p>
+<p>First we&#8217;ll setup a really simple shim around our application, which
+we can use as we improve our application:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">webob</span> <span class="kn">import</span> <span class="n">Request</span><span class="p">,</span> <span class="n">Response</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">os</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">FileApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">res</span> <span class="o">=</span> <span class="n">make_response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">res</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mimetypes</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">get_mimetype</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">type</span><span class="p">,</span> <span class="n">encoding</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="c"># We&#39;ll ignore encoding, even though we shouldn&#39;t really</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="nb">type</span> <span class="ow">or</span> <span class="s">&#39;application/octet-stream&#39;</span>
+</pre></div>
+</div>
+<p>Now we can make different definitions of <tt class="docutils literal"><span class="pre">make_response</span></tt>.  The
+simplest version:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">make_response</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">res</span> <span class="o">=</span> <span class="n">Response</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="n">get_mimetype</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">res</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">res</span>
+</pre></div>
+</div>
+<p>Let&#8217;s give it a go.  We&#8217;ll test it out with a file <tt class="docutils literal"><span class="pre">test-file.txt</span></tt>
+in the WebOb doc directory:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">doc_dir</span><span class="p">,</span> <span class="s">&#39;test-file.txt&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+<span class="go">&#39;This is a test.  Hello test people!&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">app</span> <span class="o">=</span> <span class="n">FileApp</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<span class="go">200 OK</span>
+<span class="go">Content-Type: text/plain; charset=UTF-8</span>
+<span class="go">Content-Length: 35</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">This is a test.  Hello test people!</span>
+</pre></div>
+</div>
+<p>Well, that worked.  But it&#8217;s not a very fancy object.  First, it reads
+everything into memory, and that&#8217;s bad.  We&#8217;ll create an iterator instead:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">FileIterable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">FileIterator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">FileIterator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">chunk_size</span> <span class="o">=</span> <span class="mf">4096</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">fileobj</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="bp">self</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="n">chunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileobj</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chunk_size</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">chunk</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="k">raise</span> <span class="ne">StopIteration</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">chunk</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">make_response</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">res</span> <span class="o">=</span> <span class="n">Response</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="n">get_mimetype</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">res</span><span class="o">.</span><span class="n">app_iter</span> <span class="o">=</span> <span class="n">FileIterable</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">res</span><span class="o">.</span><span class="n">content_length</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">res</span>
+</pre></div>
+</div>
+<p>And testing:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<span class="go">200 OK</span>
+<span class="go">Content-Type: text/plain; charset=UTF-8</span>
+<span class="go">Content-Length: 35</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">This is a test.  Hello test people!</span>
+</pre></div>
+</div>
+<p>Well, that doesn&#8217;t <em>look</em> different, but lets <em>imagine</em> that it&#8217;s
+different because we know we changed some code.  Now to add some basic
+metadata to the response:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">make_response</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">res</span> <span class="o">=</span> <span class="n">Response</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="n">get_mimetype</span><span class="p">(</span><span class="n">filename</span><span class="p">),</span>
+<span class="gp">... </span>                   <span class="n">conditional_response</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">res</span><span class="o">.</span><span class="n">app_iter</span> <span class="o">=</span> <span class="n">FileIterable</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">res</span><span class="o">.</span><span class="n">content_length</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">res</span><span class="o">.</span><span class="n">last_modified</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">res</span><span class="o">.</span><span class="n">etag</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">-</span><span class="si">%s</span><span class="s">-</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">filename</span><span class="p">),</span>
+<span class="gp">... </span>                             <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">filename</span><span class="p">),</span> <span class="nb">hash</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">res</span>
+</pre></div>
+</div>
+<p>Now, with <tt class="docutils literal"><span class="pre">conditional_response</span></tt> on, and with <tt class="docutils literal"><span class="pre">last_modified</span></tt> and
+<tt class="docutils literal"><span class="pre">etag</span></tt> set, we can do conditional requests:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">res</span>
+<span class="go">200 OK</span>
+<span class="go">Content-Type: text/plain; charset=UTF-8</span>
+<span class="go">Content-Length: 35</span>
+<span class="go">Last-Modified: ... GMT</span>
+<span class="go">ETag: ...-...</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">This is a test.  Hello test people!</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req2</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req2</span><span class="o">.</span><span class="n">if_none_match</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">etag</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req2</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<span class="go">&lt;Response ... 304 Not Modified&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req3</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req3</span><span class="o">.</span><span class="n">if_modified_since</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">last_modified</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req3</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<span class="go">&lt;Response ... 304 Not Modified&gt;</span>
+</pre></div>
+</div>
+<p>We can even do Range requests, but it will currently involve iterating
+through the file unnecessarily.  When there&#8217;s a range request (and you
+set <tt class="docutils literal"><span class="pre">conditional_response=True</span></tt>) the application will satisfy that
+request.  But with an arbitrary iterator the only way to do that is to
+run through the beginning of the iterator until you get to the chunk
+that the client asked for.  We can do better because we can use
+<tt class="docutils literal"><span class="pre">fileobj.seek(pos)</span></tt> to move around the file much more efficiently.</p>
+<p>So we&#8217;ll add an extra method, <tt class="docutils literal"><span class="pre">app_iter_range</span></tt>, that <tt class="docutils literal"><span class="pre">Response</span></tt>
+looks for:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">FileIterable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">start</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="o">=</span> <span class="n">stop</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">FileIterator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">app_iter_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">FileIterator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">chunk_size</span> <span class="o">=</span> <span class="mf">4096</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">fileobj</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="k">if</span> <span class="n">start</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="bp">self</span><span class="o">.</span><span class="n">fileobj</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="k">if</span> <span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">stop</span> <span class="o">-</span> <span class="n">start</span>
+<span class="gp">... </span>        <span class="k">else</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="bp">self</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">&lt;=</span> <span class="mf">0</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="k">raise</span> <span class="ne">StopIteration</span>
+<span class="gp">... </span>        <span class="n">chunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileobj</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chunk_size</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">chunk</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="k">raise</span> <span class="ne">StopIteration</span>
+<span class="gp">... </span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+<span class="gp">... </span>            <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">-=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+<span class="gp">... </span>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">&lt;</span> <span class="mf">0</span><span class="p">:</span>
+<span class="gp">... </span>                <span class="c"># Chop off the extra:</span>
+<span class="gp">... </span>                <span class="n">chunk</span> <span class="o">=</span> <span class="n">chunk</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">]</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">chunk</span>
+</pre></div>
+</div>
+<p>Now we&#8217;ll test it out:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req2</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Re-fetch the first 5 bytes:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req2</span><span class="o">.</span><span class="n">range</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0</span><span class="p">,</span> <span class="mf">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res2</span> <span class="o">=</span> <span class="n">req2</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res2</span>
+<span class="go">&lt;Response ... 206 Partial Content&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Let&#39;s check it&#39;s our custom class:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res2</span><span class="o">.</span><span class="n">app_iter</span>
+<span class="go">&lt;FileIterable object at ...&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res2</span><span class="o">.</span><span class="n">body</span>
+<span class="go">&#39;This &#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># Now, conditional range support:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req3</span> <span class="o">=</span> <span class="n">Request</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req3</span><span class="o">.</span><span class="n">if_range</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">etag</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req3</span><span class="o">.</span><span class="n">range</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0</span><span class="p">,</span> <span class="mf">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req3</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<span class="go">&lt;Response ... 206 Partial Content&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req3</span><span class="o">.</span><span class="n">if_range</span> <span class="o">=</span> <span class="s">&#39;invalid-etag&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req3</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<span class="go">&lt;Response ... 200 OK&gt;</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="differences.html"
+                                  title="previous chapter">Differences Between WebOb and Other Systems</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="wiki-example.html"
+                                  title="next chapter">Wiki Example</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/file-example.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="wiki-example.html" title="Wiki Example"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="differences.html" title="Differences Between WebOb and Other Systems"
+             >previous</a> |</li>
+        <li><a href="index.html">WebOb v0.9.8 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2008, Ian Bicking.
+      Last updated on Feb 03, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>
