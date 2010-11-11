@@ -1,3 +1,12 @@
+webob (1.0-1sg3) lucid; urgency=low
+
+  [ Ian Eure ]
+  * Declare source format.
+
+  [ SimpleGeo Nerds ]
+
+ -- SimpleGeo Nerds <nerds@simplegeo.com>  Thu, 11 Nov 2010 19:05:07 +0000
+
 webob (1.0-1sg0) foss-development; urgency=low
 
   * Packaged.
